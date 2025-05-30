@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 using System.Collections.Generic;
 using System;
 using Metamorph.Forms.Base;
+using Metamorph.Managers;
 
 /// <summary>
 /// 스킬 키 리매핑 및 슬롯 관리 시스템

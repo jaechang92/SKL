@@ -101,7 +101,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""New action"",
+                    ""name"": ""FormSwitch"",
                     ""type"": ""Button"",
                     ""id"": ""cdfbbd8c-6ed0-4279-82e6-8d14a648d5b5"",
                     ""expectedControlType"": """",
@@ -283,7 +283,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""New action"",
+                    ""action"": ""FormSwitch"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -336,7 +336,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         m_Player_Skill1 = m_Player.FindAction("Skill1", throwIfNotFound: true);
         m_Player_Skill2 = m_Player.FindAction("Skill2", throwIfNotFound: true);
         m_Player_Skill3 = m_Player.FindAction("Skill3", throwIfNotFound: true);
-        m_Player_Newaction = m_Player.FindAction("New action", throwIfNotFound: true);
+        m_Player_FormSwitch = m_Player.FindAction("FormSwitch", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Newaction = m_UI.FindAction("New action", throwIfNotFound: true);
@@ -415,7 +415,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Skill1;
     private readonly InputAction m_Player_Skill2;
     private readonly InputAction m_Player_Skill3;
-    private readonly InputAction m_Player_Newaction;
+    private readonly InputAction m_Player_FormSwitch;
     public struct PlayerActions
     {
         private @PlayerInputActions m_Wrapper;
@@ -428,7 +428,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         public InputAction @Skill1 => m_Wrapper.m_Player_Skill1;
         public InputAction @Skill2 => m_Wrapper.m_Player_Skill2;
         public InputAction @Skill3 => m_Wrapper.m_Player_Skill3;
-        public InputAction @Newaction => m_Wrapper.m_Player_Newaction;
+        public InputAction @FormSwitch => m_Wrapper.m_Player_FormSwitch;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -462,9 +462,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Skill3.started += instance.OnSkill3;
             @Skill3.performed += instance.OnSkill3;
             @Skill3.canceled += instance.OnSkill3;
-            @Newaction.started += instance.OnNewaction;
-            @Newaction.performed += instance.OnNewaction;
-            @Newaction.canceled += instance.OnNewaction;
+            @FormSwitch.started += instance.OnFormSwitch;
+            @FormSwitch.performed += instance.OnFormSwitch;
+            @FormSwitch.canceled += instance.OnFormSwitch;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -493,9 +493,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Skill3.started -= instance.OnSkill3;
             @Skill3.performed -= instance.OnSkill3;
             @Skill3.canceled -= instance.OnSkill3;
-            @Newaction.started -= instance.OnNewaction;
-            @Newaction.performed -= instance.OnNewaction;
-            @Newaction.canceled -= instance.OnNewaction;
+            @FormSwitch.started -= instance.OnFormSwitch;
+            @FormSwitch.performed -= instance.OnFormSwitch;
+            @FormSwitch.canceled -= instance.OnFormSwitch;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -578,7 +578,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         void OnSkill1(InputAction.CallbackContext context);
         void OnSkill2(InputAction.CallbackContext context);
         void OnSkill3(InputAction.CallbackContext context);
-        void OnNewaction(InputAction.CallbackContext context);
+        void OnFormSwitch(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {

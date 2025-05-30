@@ -1,3 +1,5 @@
+// Assets/Scripts/Forms/Base/FormData.cs
+using Metamorph.Core.Interfaces;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,23 +7,23 @@ using UnityEngine;
 namespace Metamorph.Forms.Base
 {
     [CreateAssetMenu(fileName = "NewForm", menuName = "Metamorph/Form")]
-    public class FormData : ScriptableObject
+    public class FormData : ScriptableObject, IForm  // IForm 인터페이스 추가
     {
         [Header("Identification")]
-        public string formId;               // 고유 식별자 (추가됨)
+        public string formId;
         public string formName;
         [TextArea(2, 4)]
-        public string description;          // 설명 추가
+        public string description;
 
         [Header("Visual")]
         public Sprite formSprite;
-        public Sprite formIcon;             // 인벤토리/UI용 아이콘 추가
+        public Sprite formIcon;
         public RuntimeAnimatorController animatorController;
 
         [Header("Classification")]
         public FormRarity rarity;
         public FormType type;
-        public FormCategory category;       // 카테고리 추가
+        public FormCategory category;
 
         [Header("Base Stats")]
         public float maxHealth;
@@ -38,16 +40,33 @@ namespace Metamorph.Forms.Base
         public List<PassiveAbility> passiveAbilities;
 
         [Header("Acquisition")]
-        public bool unlockedByDefault;      // 시작부터 해금되어있는지
-        public string unlockRequirement;    // 해금 조건 설명
+        public bool unlockedByDefault;
+        public string unlockRequirement;
 
-        // 게임상에서 상태를 저장할 필요가 없는 런타임 데이터
         [NonSerialized]
-        public bool isDiscovered;           // 발견 여부
+        public bool isDiscovered;
+
+        #region IForm Implementation
+
+        public string FormId => formId;
+        public string FormName => formName;
+        public Sprite FormSprite => formSprite;
+        public RuntimeAnimatorController AnimatorController => animatorController;
+        public float MaxHealth => maxHealth;
+        public float MoveSpeed => moveSpeed;
+        public float JumpForce => jumpForce;
+        public SkillData BasicAttack => basicAttack;
+        public SkillData SkillOne => skillOne;
+        public SkillData SkillTwo => skillTwo;
+        public SkillData UltimateSkill => ultimateSkill;
+        public List<PassiveAbility> PassiveAbilities => passiveAbilities;
+        public FormData.FormRarity Rarity => rarity;
+        public FormData.FormType Type => type;
+
+        #endregion
 
         private void OnValidate()
         {
-            // formId가 비어있으면 자동 생성
             if (string.IsNullOrEmpty(formId))
             {
                 formId = Guid.NewGuid().ToString();

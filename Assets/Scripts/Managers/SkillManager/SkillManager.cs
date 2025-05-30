@@ -1,232 +1,413 @@
-using Metamorph.Forms.Base;
+// Assets/Scripts/Managers/SkillManager.cs
 using UnityEngine;
 using UnityEngine.Events;
+using System.Collections.Generic;
+using Metamorph.Core.Interfaces;
+using Metamorph.Forms.Base;
 
-// 스킬 매니저 클래스 - 스킬 관리 담당
-public class SkillManager : SingletonManager<SkillManager>
+namespace Metamorph.Managers
 {
-    // 현재 장착된 스킬
-    private SkillData _basicAttack;
-    private SkillData _skill1;
-    private SkillData _skill2;
-    private SkillData _ultimateSkill;
-
-    // 쿨다운 관리
-    private float _skill1Cooldown;
-    private float _skill2Cooldown;
-    private float _ultimateSkillCooldown;
-
-    // 데미지 증가 효과 (패시브에서 적용)
-    private float _damageMultiplier = 1.0f;
-
-    // 이벤트
-    public UnityEvent<float, float> OnSkill1CooldownChanged = new UnityEvent<float, float>();
-    public UnityEvent<float, float> OnSkill2CooldownChanged = new UnityEvent<float, float>();
-    public UnityEvent<float, float> OnUltimateSkillCooldownChanged = new UnityEvent<float, float>();
-
-
-    void Start()
+    /// <summary>
+    /// 스킬 관리를 담당하는 매니저
+    /// 스킬 참조 관리, 쿨다운 처리, UI 업데이트 담당
+    /// </summary>
+    public class SkillManager : SingletonManager<SkillManager>
     {
-    }
+        [Header("Debug")]
+        [SerializeField] private bool _showDebugInfo = false;
 
-    private void OnEnable()
-    {
-        //FormManager.OnFormChanged += OnFormChanged;
-    }
+        // 스킬 슬롯
+        private ISkill _basicAttack;
+        private readonly ISkill[] _skills = new ISkill[2]; // 스킬1, 스킬2
+        private ISkill _ultimateSkill;
 
-    void Update()
-    {
-        // 쿨다운 감소
-        UpdateCooldowns();
-    }
+        // 쿨다운 추적을 위한 래퍼
+        private readonly Dictionary<ISkill, SkillCooldownTracker> _cooldownTrackers = new Dictionary<ISkill, SkillCooldownTracker>();
 
-    //private void OnFormChanged(FormData newForm)
-    //{
-    //    UpdateSkills(newForm.basicAttack, newForm.skillOne, newForm.skillTwo, newForm.ultimateSkill);
-    //}
+        // 스킬 사용자 참조 (PlayerController)
+        private ISkillUser _skillUser;
 
-    // 쿨다운 업데이트
-    void UpdateCooldowns()
-    {
-        if (_skill1Cooldown > 0)
+        // 이벤트
+        public UnityEvent<int, float, float> OnSkillCooldownChanged = new UnityEvent<int, float, float>(); // index, current, max
+        public UnityEvent<ISkill> OnSkillUsed = new UnityEvent<ISkill>();
+        public UnityEvent<ISkill[]> OnSkillsUpdated = new UnityEvent<ISkill[]>();
+
+        #region Properties
+
+        public ISkill BasicAttack => _basicAttack;
+        public ISkill GetSkill(int index) => (index >= 0 && index < _skills.Length) ? _skills[index] : null;
+        public ISkill UltimateSkill => _ultimateSkill;
+
+        #endregion
+
+        #region Unity Lifecycle
+
+        protected override void Awake()
         {
-            _skill1Cooldown -= Time.deltaTime;
-            OnSkill1CooldownChanged.Invoke(_skill1Cooldown, _skill1.cooldown);
+            base.Awake();
+            InitializeCooldownTrackers();
         }
 
-        if (_skill2Cooldown > 0)
+        private void Update()
         {
-            _skill2Cooldown -= Time.deltaTime;
-            OnSkill2CooldownChanged.Invoke(_skill2Cooldown, _skill2.cooldown);
+            UpdateAllCooldowns();
         }
 
-        if (_ultimateSkillCooldown > 0)
+        #endregion
+
+        #region Initialization
+
+        private void InitializeCooldownTrackers()
         {
-            _ultimateSkillCooldown -= Time.deltaTime;
-            OnUltimateSkillCooldownChanged.Invoke(_ultimateSkillCooldown, _ultimateSkill.cooldown);
-        }
-    }
-
-    // 스킬 업데이트 (형태 변경 시 호출)
-    public void UpdateSkills(SkillData basicAttack, SkillData skill1, SkillData skill2, SkillData ultimateSkill)
-    {
-        _basicAttack = basicAttack;
-        _skill1 = skill1;
-        _skill2 = skill2;
-        _ultimateSkill = ultimateSkill;
-
-        // 쿨다운 초기화 (형태 전환 시 스킬 쿨다운 초기화)
-        _skill1Cooldown = 0;
-        _skill2Cooldown = 0;
-        _ultimateSkillCooldown = 0;
-
-        // UI 업데이트
-        UpdateSkillUI();
-    }
-
-    // UI 업데이트
-    void UpdateSkillUI()
-    {
-        // 여기서 UI 매니저를 통해 스킬 아이콘 등 업데이트
-        // 예시: UIManager.Instance.UpdateSkillIcons(_basicAttack, _skill1, _skill2, _ultimateSkill);
-    }
-
-    // 기본 공격 사용
-    public void UseBasicAttack()
-    {
-        if (_basicAttack == null) return;
-
-        // 공격 애니메이션은 PlayerController에서 처리
-
-        // 공격 판정 및 효과 적용
-        ApplyDamageInArea(
-            _basicAttack.damage * _damageMultiplier,
-            _basicAttack.range,
-            _basicAttack.effectType,
-            _basicAttack.effectValue,
-            _basicAttack.effectDuration
-        );
-
-        // 이펙트 재생
-        PlaySkillEffect(_basicAttack.visualEffectPrefab, _basicAttack.soundEffect);
-    }
-
-    // 일반 스킬 사용
-    public void UseSkill(int skillIndex)
-    {
-        SkillData skill = null;
-        float cooldown = 0;
-
-        // 스킬 인덱스에 따라 처리
-        switch (skillIndex)
-        {
-            case 1:
-                if (_skill1Cooldown > 0) return;
-                skill = _skill1;
-                _skill1Cooldown = _skill1.cooldown;
-                break;
-            case 2:
-                if (_skill2Cooldown > 0) return;
-                skill = _skill2;
-                _skill2Cooldown = _skill2.cooldown;
-                break;
-            default:
-                return;
+            // 쿨다운 추적기 초기화는 스킬이 설정될 때 수행
         }
 
-        if (skill == null) return;
-
-        // 애니메이션 트리거
-        Animator animator = GetComponentInParent<Animator>();
-        animator.SetTrigger("Skill" + skillIndex);
-
-        // 스킬 효과 적용
-        ApplyDamageInArea(
-            skill.damage * _damageMultiplier,
-            skill.range,
-            skill.effectType,
-            skill.effectValue,
-            skill.effectDuration
-        );
-
-        // 이펙트 재생
-        PlaySkillEffect(skill.visualEffectPrefab, skill.soundEffect);
-    }
-
-    // 궁극기 사용
-    public void UseUltimateSkill()
-    {
-        if (_ultimateSkill == null || _ultimateSkillCooldown > 0) return;
-
-        _ultimateSkillCooldown = _ultimateSkill.cooldown;
-
-        // 애니메이션 트리거
-        Animator animator = GetComponentInParent<Animator>();
-        animator.SetTrigger("Ultimate");
-
-        // 효과 적용
-        ApplyDamageInArea(
-            _ultimateSkill.damage * _damageMultiplier,
-            _ultimateSkill.range,
-            _ultimateSkill.effectType,
-            _ultimateSkill.effectValue,
-            _ultimateSkill.effectDuration
-        );
-
-        // 이펙트 재생
-        PlaySkillEffect(_ultimateSkill.visualEffectPrefab, _ultimateSkill.soundEffect);
-    }
-
-    // 데미지 증가 효과 설정
-    public void SetDamageMultiplier(float multiplier)
-    {
-        _damageMultiplier = multiplier;
-    }
-
-    // 범위 내 데미지 적용
-    private void ApplyDamageInArea(float damage, float range, SkillData.SkillEffectType effectType,
-                                  float effectValue, float effectDuration)
-    {
-        // 플레이어 위치 기준으로 범위 내 적 검색
-        Collider2D[] hits = Physics2D.OverlapCircleAll(
-            transform.position,
-            range,
-            LayerMask.GetMask("Enemy")
-        );
-
-        foreach (var hit in hits)
+        /// <summary>
+        /// 스킬 사용자 등록
+        /// </summary>
+        public void RegisterSkillUser(ISkillUser skillUser)
         {
-            // 적 컴포넌트 가져오기
-            Enemy enemy = hit.GetComponent<Enemy>();
-            if (enemy != null)
+            _skillUser = skillUser;
+
+            if (_showDebugInfo)
             {
-                // 데미지 적용
-                enemy.TakeDamage(damage);
+                Debug.Log($"[SkillManager] 스킬 사용자 등록됨: {skillUser}");
+            }
+        }
 
-                // 추가 효과 적용
-                if (effectType != SkillData.SkillEffectType.None)
+        #endregion
+
+        #region Skill Management
+
+        /// <summary>
+        /// 스킬 업데이트 (Form 변경 시 호출)
+        /// </summary>
+        public void UpdateSkills(ISkill basicAttack, ISkill skill1, ISkill skill2, ISkill ultimateSkill)
+        {
+            // 이전 스킬들의 쿨다운 추적 정리
+            ClearCooldownTrackers();
+
+            // 새 스킬 설정
+            _basicAttack = basicAttack;
+            _skills[0] = skill1;
+            _skills[1] = skill2;
+            _ultimateSkill = ultimateSkill;
+
+            // 쿨다운 추적기 생성
+            CreateCooldownTrackers();
+
+            // UI 업데이트 이벤트
+            ISkill[] allSkills = { _basicAttack, _skills[0], _skills[1], _ultimateSkill };
+            OnSkillsUpdated?.Invoke(allSkills);
+
+            if (_showDebugInfo)
+            {
+                Debug.Log($"[SkillManager] 스킬 업데이트됨 - 기본: {basicAttack?.SkillName}, " +
+                         $"스킬1: {skill1?.SkillName}, 스킬2: {skill2?.SkillName}, " +
+                         $"궁극기: {ultimateSkill?.SkillName}");
+            }
+        }
+
+        /// <summary>
+        /// FormData로부터 스킬 업데이트 (레거시 지원)
+        /// </summary>
+        public void UpdateSkills(SkillData basicAttack, SkillData skill1, SkillData skill2, SkillData ultimateSkill)
+        {
+            // SkillData를 ISkill로 변환 (어댑터 패턴)
+            ISkill basicSkill = basicAttack != null ? new SkillDataAdapter(basicAttack) : null;
+            ISkill skill1Adapted = skill1 != null ? new SkillDataAdapter(skill1) : null;
+            ISkill skill2Adapted = skill2 != null ? new SkillDataAdapter(skill2) : null;
+            ISkill ultimateAdapted = ultimateSkill != null ? new SkillDataAdapter(ultimateSkill) : null;
+
+            UpdateSkills(basicSkill, skill1Adapted, skill2Adapted, ultimateAdapted);
+        }
+
+        #endregion
+
+        #region Skill Usage
+
+        /// <summary>
+        /// 기본 공격 사용
+        /// </summary>
+        public bool UseBasicAttack()
+        {
+            if (_basicAttack == null || _skillUser == null) return false;
+
+            if (_basicAttack.CanUse())
+            {
+                _skillUser.UseSkill(_basicAttack);
+                OnSkillUsed?.Invoke(_basicAttack);
+                return true;
+            }
+
+            return false;
+        }
+
+        public ISkill GetBasicAttack()
+        {
+            return _basicAttack;
+        }
+
+        /// <summary>
+        /// 일반 스킬 사용 (1-based index)
+        /// </summary>
+        public bool UseSkill(int skillIndex)
+        {
+            int arrayIndex = skillIndex - 1;
+            if (arrayIndex < 0 || arrayIndex >= _skills.Length) return false;
+
+            ISkill skill = _skills[arrayIndex];
+            if (skill == null || _skillUser == null) return false;
+
+            if (skill.CanUse())
+            {
+                _skillUser.UseSkill(skill);
+                OnSkillUsed?.Invoke(skill);
+                return true;
+            }
+
+            if (_showDebugInfo)
+            {
+                Debug.Log($"[SkillManager] 스킬 {skillIndex} 사용 불가 - 쿨다운: {skill.GetCooldown():F1}초");
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 궁극기 사용
+        /// </summary>
+        public bool UseUltimateSkill()
+        {
+            if (_ultimateSkill == null || _skillUser == null) return false;
+
+            if (_ultimateSkill.CanUse())
+            {
+                _skillUser.UseSkill(_ultimateSkill);
+                OnSkillUsed?.Invoke(_ultimateSkill);
+                return true;
+            }
+
+            if (_showDebugInfo)
+            {
+                Debug.Log($"[SkillManager] 궁극기 사용 불가 - 쿨다운: {_ultimateSkill.GetCooldown():F1}초");
+            }
+
+            return false;
+        }
+
+        #endregion
+
+        #region Cooldown Management
+
+        private void CreateCooldownTrackers()
+        {
+            // 기본 공격은 쿨다운 추적 불필요 (보통 쿨다운이 매우 짧음)
+
+            // 일반 스킬
+            for (int i = 0; i < _skills.Length; i++)
+            {
+                if (_skills[i] != null)
                 {
-                    enemy.ApplyEffect(effectType, effectValue, effectDuration);
+                    var tracker = new SkillCooldownTracker(_skills[i], i + 1);
+                    _cooldownTrackers[_skills[i]] = tracker;
+                }
+            }
+
+            // 궁극기
+            if (_ultimateSkill != null)
+            {
+                var tracker = new SkillCooldownTracker(_ultimateSkill, 3);
+                _cooldownTrackers[_ultimateSkill] = tracker;
+            }
+        }
+
+        private void ClearCooldownTrackers()
+        {
+            _cooldownTrackers.Clear();
+        }
+
+        private void UpdateAllCooldowns()
+        {
+            foreach (var tracker in _cooldownTrackers.Values)
+            {
+                if (tracker.UpdateCooldown())
+                {
+                    // 쿨다운이 변경되었으면 UI 업데이트
+                    float currentCooldown = tracker.Skill.GetCooldown();
+                    float maxCooldown = tracker.GetMaxCooldown();
+                    OnSkillCooldownChanged?.Invoke(tracker.SkillIndex, currentCooldown, maxCooldown);
                 }
             }
         }
-    }
 
-    // 스킬 이펙트 재생
-    private void PlaySkillEffect(GameObject effectPrefab, AudioClip soundEffect)
-    {
-        if (effectPrefab != null)
+        #endregion
+
+        #region Helper Classes
+
+        /// <summary>
+        /// 스킬 쿨다운 추적 헬퍼 클래스
+        /// </summary>
+        private class SkillCooldownTracker
         {
-            Instantiate(effectPrefab, transform.position, Quaternion.identity);
+            public ISkill Skill { get; private set; }
+            public int SkillIndex { get; private set; } // UI 업데이트용
+            private float _lastCooldown;
+            private float _maxCooldown;
+
+            public SkillCooldownTracker(ISkill skill, int index)
+            {
+                Skill = skill;
+                SkillIndex = index;
+                _lastCooldown = skill.GetCooldown();
+                _maxCooldown = 0f;
+            }
+
+            public bool UpdateCooldown()
+            {
+                float currentCooldown = Skill.GetCooldown();
+
+                // 스킬이 방금 사용되었는지 체크
+                if (currentCooldown > _lastCooldown)
+                {
+                    _maxCooldown = currentCooldown;
+                }
+
+                bool changed = !Mathf.Approximately(currentCooldown, _lastCooldown);
+                _lastCooldown = currentCooldown;
+                return changed;
+            }
+
+            public float GetMaxCooldown() => _maxCooldown;
         }
 
-        if (soundEffect != null)
+        /// <summary>
+        /// SkillData를 ISkill로 변환하는 어댑터
+        /// </summary>
+        private class SkillDataAdapter : ISkill
         {
-            AudioSource audioSource = GetComponent<AudioSource>();
-            if (audioSource != null)
+            private readonly SkillData _skillData;
+            private float _lastUsedTime;
+
+            public string SkillName => _skillData.skillName;
+
+            public SkillDataAdapter(SkillData skillData)
             {
-                audioSource.PlayOneShot(soundEffect);
+                _skillData = skillData;
+            }
+
+            public void Execute(ISkillContext context)
+            {
+                // SkillData의 효과를 ISkillContext를 통해 실행
+                ApplyDamageInArea(context);
+                PlayEffects(context.Position);
+                _lastUsedTime = Time.time;
+            }
+
+            public bool CanUse()
+            {
+                return Time.time >= _lastUsedTime + _skillData.cooldown;
+            }
+
+            public float GetCooldown()
+            {
+                float remaining = (_lastUsedTime + _skillData.cooldown) - Time.time;
+                return Mathf.Max(0, remaining);
+            }
+
+            private void ApplyDamageInArea(ISkillContext context)
+            {
+                Collider2D[] hits = Physics2D.OverlapCircleAll(
+                    context.Position,
+                    _skillData.range,
+                    context.EnemyLayer
+                );
+
+                foreach (var hit in hits)
+                {
+                    if (hit.TryGetComponent<IDamageable>(out var damageable))
+                    {
+                        float damage = _skillData.damage * context.DamageMultiplier;
+                        damageable.TakeDamage(damage);
+
+                        // 추가 효과는 별도 시스템으로 처리
+                        if (_skillData.effectType != SkillData.SkillEffectType.None)
+                        {
+                            // StatusEffectManager를 통해 처리
+                        }
+                    }
+                }
+            }
+
+            private void PlayEffects(Vector3 position)
+            {
+                if (_skillData.visualEffectPrefab != null)
+                {
+                    GameObject effect = Instantiate(_skillData.visualEffectPrefab, position, Quaternion.identity);
+                    Destroy(effect, 2f);
+                }
+
+                if (_skillData.soundEffect != null)
+                {
+                    AudioSource.PlayClipAtPoint(_skillData.soundEffect, position);
+                }
             }
         }
+
+        #endregion
+
+        #region Public Utility Methods
+
+        /// <summary>
+        /// 특정 스킬의 쿨다운 정보 가져오기
+        /// </summary>
+        public (float current, float max) GetSkillCooldownInfo(int skillIndex)
+        {
+            ISkill skill = skillIndex switch
+            {
+                1 => _skills[0],
+                2 => _skills[1],
+                3 => _ultimateSkill,
+                _ => null
+            };
+
+            if (skill != null && _cooldownTrackers.TryGetValue(skill, out var tracker))
+            {
+                return (skill.GetCooldown(), tracker.GetMaxCooldown());
+            }
+
+            return (0f, 0f);
+        }
+
+        /// <summary>
+        /// 모든 스킬 쿨다운 초기화 (디버그/치트용)
+        /// </summary>
+        [ContextMenu("모든 쿨다운 초기화")]
+        public void ResetAllCooldowns()
+        {
+            // 실제 스킬 객체의 쿨다운을 리셋하는 방법이 필요
+            // ISkill 인터페이스에 ResetCooldown() 메서드 추가 고려
+
+            if (_showDebugInfo)
+            {
+                Debug.Log("[SkillManager] 모든 스킬 쿨다운이 초기화되었습니다.");
+            }
+        }
+
+        #endregion
+
+        #region Context Menu
+
+        [ContextMenu("현재 스킬 상태 출력")]
+        private void PrintSkillStatus()
+        {
+            Debug.Log($"=== Skill Manager Status ===\n" +
+                     $"Basic Attack: {_basicAttack?.SkillName ?? "None"}\n" +
+                     $"Skill 1: {_skills[0]?.SkillName ?? "None"} (CD: {_skills[0]?.GetCooldown():F1}s)\n" +
+                     $"Skill 2: {_skills[1]?.SkillName ?? "None"} (CD: {_skills[1]?.GetCooldown():F1}s)\n" +
+                     $"Ultimate: {_ultimateSkill?.SkillName ?? "None"} (CD: {_ultimateSkill?.GetCooldown():F1}s)");
+        }
+
+        #endregion
     }
 }

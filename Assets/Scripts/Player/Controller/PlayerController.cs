@@ -1,403 +1,650 @@
-using Metamorph.Forms.Base;
+// Assets/Scripts/Player/PlayerController.cs
+using UnityEngine;
+using UnityEngine.InputSystem;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.InputSystem;
-using UnityEngine;
 using Metamorph.Core.Interfaces;
+using Metamorph.Player.Components.Movement;
+using Metamorph.Player.Components.Stats;
+using Metamorph.Player.Components.Animation;
+using Metamorph.Forms.Base;
+using Metamorph.Player.Skills;
+using Metamorph.Managers;
 
-// PlayerController 클래스 - 플레이어 제어 담당
-public class PlayerController : MonoBehaviour, IMoveable, ISkillUser, IFormChangeable, IDamageable
+/// <summary>
+/// 플레이어의 입력을 처리하고 각 컴포넌트를 조율하는 중앙 컨트롤러
+/// </summary>
+[RequireComponent(typeof(PlayerMovement))]
+[RequireComponent(typeof(PlayerStats))]
+[RequireComponent(typeof(PlayerAnimator))]
+public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
 {
-    // 기본 컴포넌트 참조
-    private Rigidbody2D _rb;
+    [Header("Input Settings")]
+    [SerializeField] private float _inputDeadzone = 0.1f;
+    [SerializeField] private bool _enableInputBuffer = true;
+    [SerializeField] private float _attackInputBuffer = 0.2f;
+
+    [Header("Combat Settings")]
+    [SerializeField] private bool _canAttackInAir = true;
+    [SerializeField] private bool _stopMovementDuringAttack = false;
+
+    [Header("Debug")]
+    [SerializeField] private bool _showDebugInfo = false;
+    [SerializeField] private bool _logInputEvents = false;
+
+    // 컴포넌트 참조
+    private PlayerMovement _playerMovement;
+    private PlayerStats _playerStats;
+    private PlayerAnimator _playerAnimator;
     private PlayerInputActions _inputActions;
-    private Animator _animator;
-    private SpriteRenderer _spriteRenderer;
-
-    // 직렬화 가능한 내부 구조체 정의
-    [System.Serializable]
-    private struct PlayerBaseStats
-    {
-        public float maxHealth;
-        public float moveSpeed;
-        public float jumpForce;
-    }
-
-    [System.Serializable]
-    private struct PlayerFinalStats
-    {
-        public float maxHealth;
-        public float moveSpeed;
-        public float jumpForce;
-    }
-
-    // 구조체를 Inspector에 표시 (private 상태 유지)
-    [SerializeField] private PlayerBaseStats _baseStats;
-    [SerializeField] private PlayerFinalStats _finalStats;
-    [SerializeField] private float _currentHealth;  // 단일 값은 직접 표시
-
-    // 캡슐화된 접근자 (public API)
-    public float MaxHealth => _finalStats.maxHealth;
-    public float CurrentHealth => _currentHealth;
-    public float MoveSpeed => _finalStats.moveSpeed;
-    public float JumpForce => _finalStats.jumpForce;
 
     // 입력 액션과 핸들러를 매핑하는 딕셔너리
-    private Dictionary<InputAction, System.Action<InputAction.CallbackContext>> _inputBindings;
+    private Dictionary<InputAction, System.Action<InputAction.CallbackContext>> _performedBindings;
+    private Dictionary<InputAction, System.Action<InputAction.CallbackContext>> _canceledBindings;
 
-
-    // 패시브 효과 수치
-    private Dictionary<PassiveAbility.PassiveAbilityType, float> _passiveEffects =
-        new Dictionary<PassiveAbility.PassiveAbilityType, float>();
-
-    // 입력 처리용 변수
-    private float _horizontalInput;
-    private bool _jumpPressed;
-    private bool _isGrounded;
-
-    // 공격/스킬 관련
+    // 입력 상태
+    private Vector2 _moveInput;
+    private float _attackBufferTimer;
     private bool _isAttacking;
-    private bool _canMove = true;
 
-    void Awake()
+    // 형태 변경 관련
+    private IForm _currentForm;
+
+    // 이벤트
+    public System.Action<IForm> OnFormChanged;
+    public System.Action OnAttackStarted;
+    public System.Action OnAttackEnded;
+
+    #region Properties
+
+    public bool IsAttacking => _isAttacking;
+    public bool CanMove => !_isAttacking || !_stopMovementDuringAttack;
+    public bool CanAttack => (!_isAttacking) && (_canAttackInAir || _playerMovement.IsGrounded);
+    public IForm CurrentForm => _currentForm;
+
+    #endregion
+
+    #region Unity Lifecycle
+
+    private void Awake()
     {
-        // 필요한 컴포넌트 참조 가져오기
-        _rb = GetComponent<Rigidbody2D>();
-        _animator = GetComponent<Animator>();
-        _spriteRenderer = GetComponent<SpriteRenderer>();
-        _inputActions = new PlayerInputActions();
-
-        // 입력 바인딩 초기화
-        InitializeInputBindings();
+        InitializeComponents();
+        InitializeInput();
     }
 
-    void InitializeInputBindings()
+    private void Start()
     {
-        _inputBindings = new Dictionary<InputAction, System.Action<InputAction.CallbackContext>>
-        {
-            { _inputActions.Player.BasicAttack, BasicAttack },
-            { _inputActions.Player.Jump, OnJumpPerformed },
-            { _inputActions.Player.Skill1, Skill1 },
-            { _inputActions.Player.Skill2, Skill2 },
-            { _inputActions.Player.Skill3, Skill3 },
+        RegisterToFormManager();
+        SetupAnimatorEvents();
+    }
 
-            // 새로운 입력이 필요하면 여기에만 추가하면 됨!
-        };
+    private void Update()
+    {
+        UpdateInputBuffers();
+        ProcessBufferedInputs();
+    }
+
+    private void FixedUpdate()
+    {
+        ProcessMovementInput();
     }
 
     private void OnEnable()
     {
-        // 입력 액션 활성화
+        EnableInput();
+    }
+
+    private void OnDisable()
+    {
+        DisableInput();
+    }
+
+    private void OnDestroy()
+    {
+        UnregisterFromFormManager();
+    }
+
+    #endregion
+
+    #region Initialization
+
+    private void InitializeComponents()
+    {
+        _playerMovement = GetComponent<PlayerMovement>();
+        _playerStats = GetComponent<PlayerStats>();
+        _playerAnimator = GetComponent<PlayerAnimator>();
+
+        if (_playerMovement == null || _playerStats == null || _playerAnimator == null)
+        {
+            Debug.LogError("[PlayerController] 필수 컴포넌트가 누락되었습니다!");
+        }
+    }
+
+    private void InitializeInput()
+    {
+        _inputActions = new PlayerInputActions();
+
+        // Performed 바인딩
+        _performedBindings = new Dictionary<InputAction, System.Action<InputAction.CallbackContext>>
+            {
+                { _inputActions.Player.Move, OnMovePerformed },
+                { _inputActions.Player.Jump, OnJumpPerformed },
+                { _inputActions.Player.BasicAttack, OnBasicAttackPerformed },
+                { _inputActions.Player.Skill1, OnSkill1Performed },
+                { _inputActions.Player.Skill2, OnSkill2Performed },
+                { _inputActions.Player.Skill3, OnSkill3Performed },
+                { _inputActions.Player.FormSwitch, OnFormSwitchPerformed }
+            };
+
+        // Canceled 바인딩
+        _canceledBindings = new Dictionary<InputAction, System.Action<InputAction.CallbackContext>>
+            {
+                { _inputActions.Player.Move, OnMoveCanceled },
+                { _inputActions.Player.Jump, OnJumpCanceled }
+            };
+    }
+
+    private void SetupAnimatorEvents()
+    {
+        if (_playerAnimator != null)
+        {
+            _playerAnimator.OnAttackAnimationHit += HandleAttackHit;
+            _playerAnimator.OnAnimationComplete += HandleAnimationComplete;
+            _playerAnimator.OnTransformAnimationComplete += HandleTransformComplete;
+        }
+    }
+
+    #endregion
+
+    #region Input Management
+
+    private void EnableInput()
+    {
         _inputActions.Enable();
 
-        // 딕셔너리의 모든 바인딩을 자동으로 구독
-        foreach (var binding in _inputBindings)
+        // Performed 이벤트 구독
+        foreach (var binding in _performedBindings)
         {
             binding.Key.performed += binding.Value;
         }
-    }
-    private void OnDisable()
-    {
-        // 입력 액션 비활성화
-        _inputActions.Disable();
 
-        // 딕셔너리의 모든 바인딩을 자동으로 구독
-        foreach (var binding in _inputBindings)
+        // Canceled 이벤트 구독
+        foreach (var binding in _canceledBindings)
+        {
+            binding.Key.canceled += binding.Value;
+        }
+    }
+
+    private void DisableInput()
+    {
+        // Performed 이벤트 구독 해제
+        foreach (var binding in _performedBindings)
         {
             binding.Key.performed -= binding.Value;
         }
+
+        // Canceled 이벤트 구독 해제
+        foreach (var binding in _canceledBindings)
+        {
+            binding.Key.canceled -= binding.Value;
+        }
+
+        _inputActions.Disable();
     }
 
-    void Start()
+    #endregion
+
+    #region Form Management
+
+    private void RegisterToFormManager()
     {
-        // 플레이어 등록 시도
         if (FormManager.Instance != null)
         {
-            FormManager.Instance.RegisterPlayer(OnFormChanged);
+            FormManager.Instance.RegisterPlayer(HandleFormChanged);
         }
         else
         {
-            // 지연 등록
             StartCoroutine(TryRegisterLater());
+        }
+    }
+
+    private void UnregisterFromFormManager()
+    {
+        if (FormManager.Instance != null)
+        {
+            FormManager.Instance.UnregisterPlayer(HandleFormChanged);
         }
     }
 
     private IEnumerator TryRegisterLater()
     {
         yield return new WaitUntil(() => FormManager.Instance != null);
-        FormManager.Instance.RegisterPlayer(OnFormChanged);
+        FormManager.Instance.RegisterPlayer(HandleFormChanged);
     }
 
-    //private void OnDestroy()
-    //{
-    //    if (FormManager.Instance != null)
-    //    {
-    //        FormManager.Instance.UnregisterPlayer(OnFormChanged);
-    //    }
-    //}
-
-
-    void Update()
+    private void HandleFormChanged(FormData formData)
     {
-        HandleInput();
-        UpdateAnimations();
-    }
+        if (formData == null) return;
 
-    void FixedUpdate()
-    {
-        Move();
-        CheckGrounded();
-    }
+        _currentForm = formData;
 
-
-    private void OnFormChanged(FormData form)
-    {
-        if (form == null) return;
+        // 스탯 업데이트는 PlayerStats가 처리
+        _playerStats.UpdateFromFormData(formData);
 
         // 애니메이터 업데이트
-        _animator.runtimeAnimatorController = form.animatorController;
+        if (_playerAnimator != null && formData.animatorController != null)
+        {
+            GetComponent<Animator>().runtimeAnimatorController = formData.animatorController;
+        }
 
-        // 스탯 업데이트
-        UpdateStats(form.maxHealth, form.moveSpeed, form.jumpForce);
-        
         // 스킬 업데이트
-        SkillManager.Instance.UpdateSkills(
-            form.basicAttack,
-            form.skillOne,
-            form.skillTwo,
-            form.ultimateSkill
-        );
-        
-
-        // 패시브 능력 적용
-        ResetPassiveEffects();
-        foreach (var passive in form.passiveAbilities)
+        if (SkillManager.Instance != null)
         {
-            ApplyPassiveEffect(passive.type, passive.value);
+            SkillManager.Instance.UpdateSkills(
+                formData.basicAttack,
+                formData.skillOne,
+                formData.skillTwo,
+                formData.ultimateSkill
+            );
+        }
+
+        // 변신 애니메이션 재생
+        _playerAnimator.PlayTransformAnimation();
+
+        OnFormChanged?.Invoke(formData);
+
+        if (_showDebugInfo)
+        {
+            Debug.Log($"[PlayerController] 형태 변경: {formData.formName}");
         }
     }
 
-    // 입력 처리
-    void HandleInput()
+    #endregion
+
+    #region Input Handlers - Movement
+
+    private void OnMovePerformed(InputAction.CallbackContext context)
     {
-        _horizontalInput = _inputActions.Player.Move.ReadValue<Vector2>().x;
+        _moveInput = context.ReadValue<Vector2>();
 
-        //if (_inputActions.Player.Jump.IsPressed() && _isGrounded)
-        //{
-        //    _jumpPressed = true;
-        //}
-
-
-
-        //// 스킬 입력
-        //if (Input.GetButtonDown("Fire2"))
-        //{
-        //    UseSkill(1); // 스킬 1
-        //}
-
-        //if (Input.GetButtonDown("Fire3"))
-        //{
-        //    UseSkill(2); // 스킬 2
-        //}
-
-        //// 궁극기
-        //if (Input.GetKeyDown(KeyCode.R))
-        //{
-        //    UseUltimateSkill();
-        //}
-
-        //// 형태 전환
-        //if (Input.GetKeyDown(KeyCode.Q))
-        //{
-        //    FormManager.Instance.SwitchToSecondaryForm();
-        //}
-    }
-
-    // 이동 처리
-    void Move()
-    {
-        if (!_canMove) return;
-
-        _rb.velocity = new Vector2(_horizontalInput * MoveSpeed, _rb.velocity.y);
-
-        // 점프 처리
-        if (_jumpPressed)
+        if (_logInputEvents)
         {
-            _rb.AddForce(Vector2.up * JumpForce, ForceMode2D.Impulse);
-            _jumpPressed = false;
-            _isGrounded = false;
-        }
-
-        // 캐릭터 방향 전환
-        if (_horizontalInput != 0)
-        {
-            _spriteRenderer.flipX = _horizontalInput < 0;
+            Debug.Log($"[PlayerController] 이동 입력: {_moveInput}");
         }
     }
 
-    // 지면 체크
-    void CheckGrounded()
+    private void OnMoveCanceled(InputAction.CallbackContext context)
     {
-        // 레이캐스트로 지면 체크
-        RaycastHit2D hit = Physics2D.Raycast(
-            transform.position - new Vector3(0, 0.5f, 0),
-            Vector2.down,
-            0.1f,
-            LayerMask.GetMask("Ground")
-        );
-
-        _isGrounded = hit.collider != null;
+        _moveInput = Vector2.zero;
     }
 
-    // 애니메이션 업데이트
-    void UpdateAnimations()
+    private void ProcessMovementInput()
     {
-        if (_animator == null || _animator.runtimeAnimatorController == null) return;
-
-        _animator.SetFloat("HorizontalSpeed", Mathf.Abs(_horizontalInput));
-        _animator.SetBool("IsGrounded", _isGrounded);
-        _animator.SetFloat("VerticalVelocity", _rb.velocity.y);
-    }
-    
-    // 기본 공격
-    void BasicAttack(InputAction.CallbackContext context)
-    {
-        _isAttacking = true;
-        _animator.SetTrigger("Attack");
-        // 공격 로직
-        SkillManager.Instance.UseBasicAttack();
-
-        // 공격 종료 시점을 애니메이션 이벤트로 처리하는 게 좋지만
-        // 간단한 구현으로 코루틴 사용
-        StartCoroutine(ResetAttackState(0.5f));
-    }
-
-    void OnJumpPerformed(InputAction.CallbackContext context)
-    {
-        if (_isGrounded && _canMove)
+        if (CanMove && _playerMovement != null)
         {
-            _jumpPressed = true;
+            // 데드존 적용
+            float horizontalInput = Mathf.Abs(_moveInput.x) > _inputDeadzone ? _moveInput.x : 0f;
+            _playerMovement.Move(new Vector2(horizontalInput, 0));
         }
     }
 
-    void Skill1(InputAction.CallbackContext context)
+    #endregion
+
+    #region Input Handlers - Jump
+
+    private void OnJumpPerformed(InputAction.CallbackContext context)
+    {
+        if (_playerMovement != null)
+        {
+            _playerMovement.RequestJump();
+        }
+
+        if (_logInputEvents)
+        {
+            Debug.Log("[PlayerController] 점프 입력");
+        }
+    }
+
+    private void OnJumpCanceled(InputAction.CallbackContext context)
+    {
+        if (_playerMovement != null)
+        {
+            _playerMovement.CancelJump();
+        }
+    }
+
+    #endregion
+
+    #region Input Handlers - Combat
+
+    private void OnBasicAttackPerformed(InputAction.CallbackContext context)
+    {
+        if (_enableInputBuffer || CanAttack)
+        {
+            _attackBufferTimer = _attackInputBuffer;
+        }
+
+        if (_logInputEvents)
+        {
+            Debug.Log("[PlayerController] 기본 공격 입력");
+        }
+    }
+
+    private void OnSkill1Performed(InputAction.CallbackContext context)
     {
         UseSkill(1);
     }
-    void Skill2(InputAction.CallbackContext context)
+
+    private void OnSkill2Performed(InputAction.CallbackContext context)
     {
         UseSkill(2);
     }
-    void Skill3(InputAction.CallbackContext context)
+
+    private void OnSkill3Performed(InputAction.CallbackContext context)
     {
         UseSkill(3);
     }
 
-    // 공격 상태 초기화
-    IEnumerator ResetAttackState(float delay)
+    private void UseSkill(int skillIndex)
     {
-        yield return new WaitForSeconds(delay);
-        _isAttacking = false;
-    }
+        if (!CanAttack) return;
 
-    // 스킬 사용
-    void UseSkill(int skillIndex)
-    {
-        SkillManager.Instance.UseSkill(skillIndex);
-    }
-
-    // 궁극기 사용
-    void UseUltimateSkill()
-    {
-        SkillManager.Instance.UseUltimateSkill();
-    }
-
-    // 스탯 업데이트 (형태 변경 시 호출됨)
-    public void UpdateStats(float maxHealth, float moveSpeed, float jumpForce)
-    {
-        _baseStats.maxHealth = maxHealth;
-        _baseStats.moveSpeed = moveSpeed;
-        _baseStats.jumpForce = jumpForce;
-
-        // 첫 설정 시 현재 체력 초기화
-        if (_currentHealth <= 0)
+        if (SkillManager.Instance != null && SkillManager.Instance.UseSkill(skillIndex))
         {
-            _currentHealth = maxHealth;
-        }
+            StartAttack();
 
-        // 최종 스탯 계산
-        RecalculateFinalStats();
-    }
-
-    // 패시브 효과 초기화
-    public void ResetPassiveEffects()
-    {
-        _passiveEffects.Clear();
-    }
-
-    // 패시브 효과 적용
-    public void ApplyPassiveEffect(PassiveAbility.PassiveAbilityType type, float value)
-    {
-        if (_passiveEffects.ContainsKey(type))
-        {
-            _passiveEffects[type] += value;
-        }
-        else
-        {
-            _passiveEffects.Add(type, value);
-        }
-
-        // 스탯 재계산
-        RecalculateFinalStats();
-    }
-
-    // 최종 스탯 계산
-    private void RecalculateFinalStats()
-    {
-        // 기본값으로 초기화
-        _finalStats.maxHealth = _baseStats.maxHealth;
-        _finalStats.moveSpeed = _baseStats.moveSpeed;
-        _finalStats.jumpForce = _baseStats.jumpForce;
-        
-
-        // 패시브 효과 적용
-        foreach (var effect in _passiveEffects)
-        {
-            switch (effect.Key)
+            if (_logInputEvents)
             {
-                case PassiveAbility.PassiveAbilityType.HealthRegen:
-                    // 체력 회복은 업데이트 로직에서 처리
-                    break;
-                case PassiveAbility.PassiveAbilityType.DamageBoost:
-                    // 데미지 증가는 스킬 매니저에서 처리
-                    break;
-                case PassiveAbility.PassiveAbilityType.SpeedBoost:
-                    _finalStats.moveSpeed *= (1 + effect.Value / 100);
-                    break;
-                case PassiveAbility.PassiveAbilityType.JumpBoost:
-                    _finalStats.jumpForce *= (1 + effect.Value / 100);
-                    break;
-                case PassiveAbility.PassiveAbilityType.DamageReduction:
-                    // 데미지 감소는 피격 로직에서 처리
-                    break;
-                case PassiveAbility.PassiveAbilityType.DoubleJump:
-                    // 더블 점프는 별도 로직으로 처리
-                    break;
+                Debug.Log($"[PlayerController] 스킬 {skillIndex} 사용");
             }
         }
     }
 
-    public void OnMove(InputAction.CallbackContext inputValue)
-    {
-        Vector2 input = inputValue.ReadValue<Vector2>();
+    #endregion
 
-        if (input != null)
+    #region Input Handlers - Form
+
+    private void OnFormSwitchPerformed(InputAction.CallbackContext context)
+    {
+        if (FormManager.Instance != null)
         {
-            _horizontalInput = input.x;
-            Debug.Log($"Horizontal Input: {_horizontalInput}");
+            FormManager.Instance.SwitchToSecondaryForm();
+
+            if (_logInputEvents)
+            {
+                Debug.Log("[PlayerController] 형태 전환 입력");
+            }
+        }
+    }
+
+    #endregion
+
+    #region Attack Management
+
+    private void UpdateInputBuffers()
+    {
+        if (_attackBufferTimer > 0)
+        {
+            _attackBufferTimer -= Time.deltaTime;
+        }
+    }
+
+    private void ProcessBufferedInputs()
+    {
+        // 버퍼된 공격 입력 처리
+        if (_attackBufferTimer > 0 && CanAttack)
+        {
+            PerformBasicAttack();
+            _attackBufferTimer = 0;
+        }
+    }
+
+    private void PerformBasicAttack()
+    {
+        if (SkillManager.Instance != null && SkillManager.Instance.UseBasicAttack())
+        {
+            StartAttack();
+            _playerAnimator.PlayAttackAnimation(0);
+        }
+    }
+
+    private void StartAttack()
+    {
+        _isAttacking = true;
+        OnAttackStarted?.Invoke();
+
+        if (_stopMovementDuringAttack)
+        {
+            _playerMovement.Stop();
+        }
+    }
+
+    private void EndAttack()
+    {
+        _isAttacking = false;
+        OnAttackEnded?.Invoke();
+    }
+
+    #endregion
+
+    #region Animation Event Handlers
+
+    private void HandleAttackHit()
+    {
+        // 실제 데미지 처리 로직
+        if (_showDebugInfo)
+        {
+            Debug.Log("[PlayerController] 공격 타격!");
+        }
+    }
+
+    private void HandleAnimationComplete()
+    {
+        if (_isAttacking)
+        {
+            EndAttack();
+        }
+    }
+
+    private void HandleTransformComplete()
+    {
+        if (_showDebugInfo)
+        {
+            Debug.Log("[PlayerController] 변신 완료!");
+        }
+    }
+
+    #endregion
+
+    #region Public Methods
+
+    /// <summary>
+    /// 이동 가능 여부 설정
+    /// </summary>
+    public void SetMovementEnabled(bool enabled)
+    {
+        if (!enabled)
+        {
+            _playerMovement.Stop();
+        }
+    }
+
+    /// <summary>
+    /// 공격 가능 여부 설정
+    /// </summary>
+    public void SetCombatEnabled(bool enabled)
+    {
+        if (!enabled && _isAttacking)
+        {
+            EndAttack();
+        }
+    }
+
+    /// <summary>
+    /// 입력 완전 차단/해제
+    /// </summary>
+    public void SetInputEnabled(bool enabled)
+    {
+        if (enabled)
+        {
+            EnableInput();
+        }
+        else
+        {
+            DisableInput();
+            _moveInput = Vector2.zero;
+            _playerMovement.Stop();
+        }
+    }
+
+    #endregion
+
+    #region ISkillUser Implementation
+
+    public void UseSkill(ISkill skill)
+    {
+        if (!CanAttack || skill == null) return;
+
+        // 스킬 사용 가능 여부 체크
+        if (!skill.CanUse())
+        {
+            if (_showDebugInfo)
+            {
+                Debug.Log($"[PlayerController] '{skill.SkillName}' 사용 불가 (쿨다운: {skill.GetCooldown():F1}초)");
+            }
+            return;
         }
 
+        // 스킬 컨텍스트 생성
+        ISkillContext context = CreateSkillContext();
 
+        // 공격 시작
+        StartAttack();
+
+        // 애니메이션 재생
+        PlaySkillAnimation(skill);
+
+        // 스킬 실행
+        skill.Execute(context);
+
+        // 스킬 이펙트 재생 (스킬이 ISkillEffect도 구현하는 경우)
+        if (skill is ISkillEffect skillEffect)
+        {
+            skillEffect.PlayEffect(context.Position);
+        }
+
+        if (_showDebugInfo)
+        {
+            Debug.Log($"[PlayerController] '{skill.SkillName}' 사용됨");
+        }
     }
+
+    public void UseBasicAttack()
+    {
+        if (!CanAttack) return;
+
+        // 기본 공격도 ISkill 인터페이스를 구현한 객체로 처리
+        ISkill basicAttack = SkillManager.Instance?.GetBasicAttack();
+        if (basicAttack != null)
+        {
+            UseSkill(basicAttack);
+        }
+    }
+    public void UseUltimateSkill()
+    {
+        if (CanAttack && SkillManager.Instance != null)
+        {
+            if (SkillManager.Instance.UseUltimateSkill())
+            {
+                StartAttack();
+                _playerAnimator.PlayAttackAnimation(3); // 궁극기 애니메이션
+            }
+        }
+    }
+
+    #endregion
+
+    #region IFormChangeable Implementation
+
+    public void ChangeForm(IForm newForm)
+    {
+        if (newForm != null && newForm is FormData formData)
+        {
+            HandleFormChanged(formData);
+        }
+    }
+
+    #endregion
+
+    #region Skill Context Creation
+
+    /// <summary>
+    /// 현재 플레이어 상태로부터 스킬 컨텍스트 생성
+    /// </summary>
+    private ISkillContext CreateSkillContext()
+    {
+        return new PlayerSkillContext(
+            position: transform.position,
+            damageMultiplier: _playerStats.DamageMultiplier,
+            enemyLayer: LayerMask.GetMask("Enemy"),
+            caster: this.gameObject,
+            facingDirection: _playerMovement.FacingRight ? Vector2.right : Vector2.left
+        );
+    }
+
+    /// <summary>
+    /// 스킬에 맞는 애니메이션 재생
+    /// </summary>
+    private void PlaySkillAnimation(ISkill skill)
+    {
+        // 스킬 이름이나 태그로 애니메이션 매핑
+        Dictionary<string, int> animationMap = new Dictionary<string, int>
+    {
+        { "BasicAttack", 0 },
+        { "Skill1", 1 },
+        { "Skill2", 2 },
+        { "Ultimate", 3 }
+    };
+
+        // 스킬 이름에서 애니메이션 인덱스 찾기
+        foreach (var kvp in animationMap)
+        {
+            if (skill.SkillName.Contains(kvp.Key))
+            {
+                _playerAnimator.PlayAttackAnimation(kvp.Value);
+                return;
+            }
+        }
+
+        // 기본 공격 애니메이션
+        _playerAnimator.PlayAttackAnimation(0);
+    }
+
+    #endregion
+
+    #region Context Menu (에디터 전용)
+
+    [ContextMenu("현재 상태 출력")]
+    private void ContextMenuPrintStatus()
+    {
+        Debug.Log($"=== Player Controller Status ===\n" +
+                 $"Can Move: {CanMove}\n" +
+                 $"Can Attack: {CanAttack}\n" +
+                 $"Is Attacking: {_isAttacking}\n" +
+                 $"Current Form: {_currentForm?.FormName ?? "None"}\n" +
+                 $"Move Input: {_moveInput}");
+    }
+
+    [ContextMenu("형태 전환 테스트")]
+    private void ContextMenuTestFormSwitch()
+    {
+        if (Application.isPlaying && FormManager.Instance != null)
+        {
+            FormManager.Instance.SwitchToSecondaryForm();
+        }
+    }
+
+    #endregion
+
 
 }

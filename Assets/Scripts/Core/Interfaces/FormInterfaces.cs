@@ -1,7 +1,7 @@
 // Assets/Scripts/Core/Interfaces/FormInterfaces.cs
 using UnityEngine;
-using System;
 using System.Collections.Generic;
+using Metamorph.Forms.Base;
 
 namespace Metamorph.Core.Interfaces
 {
@@ -11,21 +11,15 @@ namespace Metamorph.Core.Interfaces
         string FormName { get; }
         Sprite FormSprite { get; }
         RuntimeAnimatorController AnimatorController { get; }
-
         float MaxHealth { get; }
         float MoveSpeed { get; }
         float JumpForce { get; }
-
         SkillData BasicAttack { get; }
         SkillData SkillOne { get; }
         SkillData SkillTwo { get; }
         SkillData UltimateSkill { get; }
-
         List<PassiveAbility> PassiveAbilities { get; }
-        FormRarity Rarity { get; }
-        FormType Type { get; }
+        FormData.FormRarity Rarity { get; }  // FormData.FormRarity로 수정
+        FormData.FormType Type { get; }      // FormData.FormType으로 수정
     }
-
-    public enum FormRarity { Common, Rare, Epic, Legendary }
-    public enum FormType { Warrior, Mage, Assassin, Tank, Support }
 }
