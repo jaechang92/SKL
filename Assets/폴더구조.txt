@@ -1,0 +1,168 @@
+Assets/
+├── _Project/                  // 프로젝트 설정 및 메타 파일
+│   ├── Scenes/                // 게임 씬 파일들
+│   ├── Settings/              // 프로젝트 설정(Input System, Rendering 등)
+│   └── Prefabs/               // 전체 씬에서 사용되는 공통 프리팹
+│
+├── Art/                       // 시각적 에셋
+│   ├── Sprites/               // 스프라이트 이미지
+│   │   ├── Characters/        // 캐릭터 스프라이트
+│   │   ├── Forms/             // 변신 형태별 스프라이트
+│   │   ├── Environments/      // 환경 스프라이트
+│   │   ├── Items/             // 아이템 스프라이트
+│   │   └── UI/                // UI 스프라이트
+│   ├── Animations/            // 애니메이션 파일
+│   │   ├── Player/            // 플레이어 애니메이션
+│   │   ├── Forms/             // 형태별 애니메이션
+│   │   └── Enemies/           // 적 애니메이션
+│   ├── Materials/             // 머티리얼
+│   └── Effects/               // 이펙트/파티클
+│
+├── Audio/                     // 오디오 파일
+│   ├── Music/                 // BGM
+│   ├── SFX/                   // 효과음
+│   └── Voice/                 // 음성(필요시)
+├── Data/
+│   ├── Databases/
+│   │   └── MainFormDatabase.asset          // 생성된 FormDatabase 인스턴스
+│   │
+│   └── Forms/                              // 개별 FormData 에셋들
+│       ├── Base/
+│       │   └── DefaultForm.asset
+│       ├── Warrior/
+│       │   ├── KnightForm.asset
+│       │   └── BerserkerForm.asset
+│       ├── Mage/
+│       │   ├── FireMageForm.asset
+│       │   └── IceMageForm.asset
+│       └── Legendary/
+│           └── DragonKingForm.asset
+│
+├── Resources/                 // 런타임 로드 리소스
+│   ├── Forms/                 // 형태 ScriptableObjects
+│   ├── Skills/                // 스킬 ScriptableObjects
+│   └── Items/                 // 아이템 ScriptableObjects
+│
+├── Scripts/                   // 모든 스크립트 파일
+│   ├── Core/                  // 핵심 게임 시스템
+│   │   ├── Interfaces/        // 인터페이스 정의
+│   │   └── Utils/             // 유틸리티 스크립트
+│   ├── Managers/              // 게임 매니저 스크립트
+│   │   ├── FormManager/       // 형태 관리 시스템
+│   │   │   └── FormManager.cs // 폼 관리 시스템
+│   │   ├── SkillManager/      // 스킬 관리 시스템
+│   │   ├── LevelManager/      // 레벨 관리 시스템
+│   │   ├── UIManager/         // UI 관리 시스템
+│   │   ├── AudioManager/      // 오디오 관리 시스템
+│   │   ├── SaveManager/       // 저장 관리 시스템
+│   │   ├── PoolManager/       // 오브젝트 풀 시스템
+│   │   └── GameManager/       // 전체 게임 관리 시스템
+│   ├── Player/                // 플레이어 관련 스크립트
+│   │   ├── Controller/        // 플레이어 제어
+│   │   ├── States/            // 상태 머신 (필요시)
+│   │   └── Abilities/         // 기본 능력
+│   ├── Forms/
+│   │   ├── Base/
+│   │   │   ├── FormData.cs                 // 기본 폼 데이터 정의
+│   │   │   └── FormDatabase.cs             // 폼 데이터베이스 ScriptableObject 클래스
+│   │   └── Types/                          // 구체적인 폼 유형 구현 (필요시)
+│   ├── Skills/                // 스킬 관련 스크립트
+│   │   ├── Base/              // 기본 클래스
+│   │   └── Effects/           // 스킬 효과
+│   ├── Items/                 // 아이템 관련 스크립트
+│   │   ├── Base/              // 기본 클래스
+│   │   ├── Consumables/       // 소모품
+│   │   ├── Equipment/         // 장비
+│   │   └── Collectibles/      // 수집품
+│   ├── Enemies/               // 적 관련 스크립트
+│   │   ├── Base/              // 기본 클래스
+│   │   ├── Behaviors/         // AI 행동
+│   │   └── Types/             // 적 유형별 구현
+│   ├── Level/                 // 레벨 관련 스크립트
+│	│	├── Generation/                   // 절차적 생성 관련
+│	│	│   ├── DungeonGenerator.cs       // 메인 던전 생성 시스템
+│	│	│   ├── DungeonLayout.cs          // 던전 레이아웃 클래스
+│	│	│   └── LevelGenerator.cs         // 레벨 생성 유틸리티 (필요시)
+│	│	│
+│	│	├── Room/                         // 방 관련 시스템
+│	│	│   ├── Room.cs                   // 기본 방 클래스
+│	│	│   ├── Corridor.cs               // 통로 클래스
+│	│	│   ├── RoomData.cs               // 방 데이터 구조체
+│	│	│   └── Components/               // 방 관련 컴포넌트
+│	│	│       ├── ShopItem.cs           // 상점 아이템
+│	│	│       ├── RoomEntrance.cs       // 방 입구
+│	│	│       └── RoomExit.cs           // 방 출구
+│	│	│
+│	│	├── Objects/                      // 레벨 오브젝트
+│	│	│   ├── LevelObject.cs            // 기본 레벨 오브젝트 클래스
+│	│	│   ├── Interactable/             // 상호작용 가능한 오브젝트
+│	│	│   │   ├── Chest.cs              // 상자
+│	│	│   │   ├── Switch.cs             // 스위치
+│	│	│   │   └── Door.cs               // 문
+│	│	│   └── Obstacles/                // 장애물 오브젝트
+│	│	│       ├── DestructibleObstacle.cs // 파괴 가능한 장애물
+│	│	│       └── HazardObstacle.cs     // 위험 장애물
+│	│	│
+│	│	└── Data/                         // 레벨 관련 데이터
+│	│		├── Dungeon.cs                // 던전 데이터 클래스
+│	│		└── SpawnData/                // 스폰 데이터
+│	│			├── EnemySpawnData.cs     // 적 스폰 데이터
+│	│			├── ItemSpawnData.cs      // 아이템 스폰 데이터
+│	│			├── ObstacleSpawnData.cs  // 장애물 스폰 데이터
+│	│			└── BossSpawnData.cs      // 보스 스폰 데이터
+│   ├── UI/                    // UI 관련 스크립트
+│   │   ├── HUD/               // 게임 내 HUD
+│   │   ├── Menus/             // 메뉴 시스템
+│   │   └── Widgets/           // UI 위젯 컴포넌트
+│   └── Events/                // 이벤트 시스템(ScriptableObject 이벤트 등)
+│
+├── Prefabs/                   // 게임 오브젝트 프리팹
+│   ├── Player/                // 플레이어 프리팹
+│   ├── Forms/                 // 형태 관련 프리팹
+│   ├── Enemies/               // 적 프리팹
+│   ├── Environment/           // 환경 프리팹
+│   ├── Items/                 // 아이템 프리팹
+│   ├── UI/                    // UI 프리팹
+│   └── Effects/               // 이펙트 프리팹
+│
+├── Editor/                    // 에디터 스크립트
+│   ├── Tools/                 // 개발 도구
+│   ├── CustomInspectors/      // 커스텀 인스펙터
+│   └── Windows/               // 에디터 윈도우
+│
+└── ThirdParty/                // 서드파티 에셋
+    ├── [패키지명1]/
+    └── [패키지명2]/
+	
+	Assets/Scripts/Level/Generation/
+├── DungeonGenerator.cs           // 메인 생성 시스템
+├── Room.cs                       // 방 클래스 (위 코드에서 분리)
+├── Corridor.cs                   // 통로 클래스 (위 코드에서 분리)
+├── SpawnData/                    // 스폰 데이터 클래스들
+│   ├── EnemySpawnData.cs         // 적 스폰 데이터
+│   ├── ItemSpawnData.cs          // 아이템 스폰 데이터
+│   ├── ObstacleSpawnData.cs      // 장애물 스폰 데이터
+│   └── BossSpawnData.cs          // 보스 스폰 데이터
+├── RoomComponents/               // 방 관련 컴포넌트
+│   └── ShopItem.cs               // 상점 아이템
+└── Utils/                        // 유틸리티 클래스들
+    ├── DungeonLayout.cs          // 던전 레이아웃 유틸리티
+    └── RoomData.cs               // 방 데이터 구조체
+	
+	
+	
+	
+	
+	│	│	│	├── DungeonGenerator.cs           // 메인 생성 시스템
+│	│	│	├── Room.cs                       // 방 클래스 (위 코드에서 분리)
+│	│	│	├── Corridor.cs                   // 통로 클래스 (위 코드에서 분리)
+│	│	│	├── SpawnData/                    // 스폰 데이터 클래스들
+│	│	│	│   ├── EnemySpawnData.cs         // 적 스폰 데이터
+│	│	│	│   ├── ItemSpawnData.cs          // 아이템 스폰 데이터
+│	│	│	│   ├── ObstacleSpawnData.cs      // 장애물 스폰 데이터
+│	│	│	│   └── BossSpawnData.cs          // 보스 스폰 데이터
+│	│	│	├── RoomComponents/               // 방 관련 컴포넌트
+│	│	│	│   └── ShopItem.cs               // 상점 아이템
+│	│	│	└── Utils/                        // 유틸리티 클래스들
+│	│	│		├── DungeonLayout.cs          // 던전 레이아웃 유틸리티
+│	│	│		└── RoomData.cs               // 방 데이터 구조체
