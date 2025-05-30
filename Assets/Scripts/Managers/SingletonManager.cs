@@ -7,12 +7,17 @@ public abstract class SingletonManager<T> : MonoBehaviour where T : MonoBehaviou
 {
     private static bool _quitting = false;
 
-    // 앱 종료 감지
-    [RuntimeInitializeOnLoadMethod]
-    private static void RunOnStart()
+    private void OnApplicationQuit()
     {
-        Application.quitting += () => _quitting = true;
+        _quitting = true;
     }
+
+    // 앱 종료 감지
+    //[RuntimeInitializeOnLoadMethod]
+    //private static void RunOnStart()
+    //{
+    //    Application.quitting += () => _quitting = true;
+    //}
 
     // 인스턴스 저장 변수
     private static T _instance;

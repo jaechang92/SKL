@@ -133,6 +133,9 @@ GameObject:
   - component: {fileID: 85477601}
   - component: {fileID: 85477603}
   - component: {fileID: 85477604}
+  - component: {fileID: 85477607}
+  - component: {fileID: 85477606}
+  - component: {fileID: 85477605}
   m_Layer: 0
   m_Name: PlayerTest
   m_TagString: Untagged
@@ -167,15 +170,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f57b7f5c718b974db91bc35af477c6e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _baseStats:
-    maxHealth: 0
-    moveSpeed: 0
-    jumpForce: 0
-  _finalStats:
-    maxHealth: 0
-    moveSpeed: 0
-    jumpForce: 0
-  _currentHealth: 0
+  _inputDeadzone: 0.1
+  _enableInputBuffer: 1
+  _attackInputBuffer: 0.2
+  _canAttackInAir: 1
+  _stopMovementDuringAttack: 0
+  _showDebugInfo: 0
+  _logInputEvents: 0
 --- !u!212 &85477600
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -408,6 +409,92 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!114 &85477605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 85477597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55d76ece644109e4fa198cbbd9d26775, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _speedParameter: Speed
+  _velocityXParameter: VelocityX
+  _velocityYParameter: VelocityY
+  _isGroundedParameter: IsGrounded
+  _isMovingParameter: IsMoving
+  _isFallingParameter: IsFalling
+  _isRisingParameter: IsRising
+  _jumpTrigger: Jump
+  _doubleJumpTrigger: DoubleJump
+  _landedTrigger: Landed
+  _damageTrigger: Damage
+  _deathTrigger: Death
+  _transformTrigger: Transform
+  _movementThreshold: 0.1
+  _animatorDampTime: 0.1
+  _useRootMotion: 0
+  _jumpParticles: {fileID: 0}
+  _landParticles: {fileID: 0}
+  _doubleJumpParticles: {fileID: 0}
+  _particleSpawnPoint: {fileID: 0}
+  _showDebugInfo: 0
+  _logAnimationEvents: 0
+--- !u!114 &85477606
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 85477597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2567c2242badd514b851bb40968aa5b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _baseStats:
+    maxHealth: 0
+    moveSpeed: 0
+    jumpForce: 0
+  _finalStats:
+    maxHealth: 0
+    moveSpeed: 0
+    jumpForce: 0
+  _currentHealth: 0
+  _initializeHealthOnStart: 1
+  _showDebugInfo: 0
+  _activeEffectsDebug: []
+--- !u!114 &85477607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 85477597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40c8f4ccd2b78e247b4350f13b231244, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _groundCheckPoint: {fileID: 0}
+  _groundCheckSize: {x: 0.8, y: 0.1}
+  _groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 64
+  _groundCheckDistance: 0.1
+  _accelerationTime: 0.1
+  _decelerationTime: 0.1
+  _airAccelerationMultiplier: 0.6
+  _maxFallSpeed: -25
+  _coyoteTime: 0.15
+  _jumpBufferTime: 0.2
+  _jumpCutMultiplier: 0.5
+  _allowDoubleJump: 0
+  _showDebugInfo: 0
+  _drawGizmos: 1
 --- !u!1 &183108795
 GameObject:
   m_ObjectHideFlags: 0
