@@ -27,7 +27,11 @@ public class SkillManager : SingletonManager<SkillManager>
 
     void Start()
     {
-        FormManager.OnFormChanged += OnFormChanged;
+    }
+
+    private void OnEnable()
+    {
+        //FormManager.OnFormChanged += OnFormChanged;
     }
 
     void Update()
@@ -36,10 +40,10 @@ public class SkillManager : SingletonManager<SkillManager>
         UpdateCooldowns();
     }
 
-    private void OnFormChanged(FormData newForm)
-    {
-        UpdateSkills(newForm.basicAttack, newForm.skillOne, newForm.skillTwo, newForm.ultimateSkill);
-    }
+    //private void OnFormChanged(FormData newForm)
+    //{
+    //    UpdateSkills(newForm.basicAttack, newForm.skillOne, newForm.skillTwo, newForm.ultimateSkill);
+    //}
 
     // 쿨다운 업데이트
     void UpdateCooldowns()

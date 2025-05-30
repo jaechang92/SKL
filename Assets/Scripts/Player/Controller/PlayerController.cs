@@ -3,9 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine;
+using Metamorph.Core.Interfaces;
 
 // PlayerController 클래스 - 플레이어 제어 담당
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IMoveable, ISkillUser, IFormChangeable, IDamageable
 {
     // 기본 컴포넌트 참조
     private Rigidbody2D _rb;
@@ -41,7 +42,9 @@ public class PlayerController : MonoBehaviour
     public float MoveSpeed => _finalStats.moveSpeed;
     public float JumpForce => _finalStats.jumpForce;
 
-    
+    // 입력 액션과 핸들러를 매핑하는 딕셔너리
+    private Dictionary<InputAction, System.Action<InputAction.CallbackContext>> _inputBindings;
+
 
     // 패시브 효과 수치
     private Dictionary<PassiveAbility.PassiveAbilityType, float> _passiveEffects =
@@ -64,21 +67,45 @@ public class PlayerController : MonoBehaviour
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _inputActions = new PlayerInputActions();
 
+        // 입력 바인딩 초기화
+        InitializeInputBindings();
+    }
+
+    void InitializeInputBindings()
+    {
+        _inputBindings = new Dictionary<InputAction, System.Action<InputAction.CallbackContext>>
+        {
+            { _inputActions.Player.BasicAttack, BasicAttack },
+            { _inputActions.Player.Jump, OnJumpPerformed },
+            { _inputActions.Player.Skill1, Skill1 },
+            { _inputActions.Player.Skill2, Skill2 },
+            { _inputActions.Player.Skill3, Skill3 },
+
+            // 새로운 입력이 필요하면 여기에만 추가하면 됨!
+        };
     }
 
     private void OnEnable()
     {
         // 입력 액션 활성화
         _inputActions.Enable();
-        _inputActions.Player.BasicAttack.performed += BasicAttack;
-        //_inputActions.Player.Skill1.performed += UseSkill;
+
+        // 딕셔너리의 모든 바인딩을 자동으로 구독
+        foreach (var binding in _inputBindings)
+        {
+            binding.Key.performed += binding.Value;
+        }
     }
     private void OnDisable()
     {
         // 입력 액션 비활성화
         _inputActions.Disable();
-        _inputActions.Player.BasicAttack.performed -= BasicAttack;
-        //_inputActions.Player.Skill1.performed -= UseSkill;
+
+        // 딕셔너리의 모든 바인딩을 자동으로 구독
+        foreach (var binding in _inputBindings)
+        {
+            binding.Key.performed -= binding.Value;
+        }
     }
 
     void Start()
@@ -132,6 +159,15 @@ public class PlayerController : MonoBehaviour
 
         // 스탯 업데이트
         UpdateStats(form.maxHealth, form.moveSpeed, form.jumpForce);
+        
+        // 스킬 업데이트
+        SkillManager.Instance.UpdateSkills(
+            form.basicAttack,
+            form.skillOne,
+            form.skillTwo,
+            form.ultimateSkill
+        );
+        
 
         // 패시브 능력 적용
         ResetPassiveEffects();
@@ -146,10 +182,10 @@ public class PlayerController : MonoBehaviour
     {
         _horizontalInput = _inputActions.Player.Move.ReadValue<Vector2>().x;
 
-        if (_inputActions.Player.Jump.IsPressed() && _isGrounded)
-        {
-            _jumpPressed = true;
-        }
+        //if (_inputActions.Player.Jump.IsPressed() && _isGrounded)
+        //{
+        //    _jumpPressed = true;
+        //}
 
 
 
@@ -236,9 +272,25 @@ public class PlayerController : MonoBehaviour
         StartCoroutine(ResetAttackState(0.5f));
     }
 
-    void SKill1(InputAction.CallbackContext context)
+    void OnJumpPerformed(InputAction.CallbackContext context)
     {
-        //UseSkill();
+        if (_isGrounded && _canMove)
+        {
+            _jumpPressed = true;
+        }
+    }
+
+    void Skill1(InputAction.CallbackContext context)
+    {
+        UseSkill(1);
+    }
+    void Skill2(InputAction.CallbackContext context)
+    {
+        UseSkill(2);
+    }
+    void Skill3(InputAction.CallbackContext context)
+    {
+        UseSkill(3);
     }
 
     // 공격 상태 초기화
