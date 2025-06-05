@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using CustomDebug;
 
 /// <summary>
 /// 게임 전체 매니저 시스템을 초기화하고 관리하는 클래스
@@ -206,7 +207,7 @@ public class ManagerInitializer : SingletonManager<ManagerInitializer>
     {
         if (_logInitialization)
         {
-            Debug.Log($"[ManagerInitializer] {message}");
+            JCDebug.Log($"[ManagerInitializer] {message}");
         }
     }
 

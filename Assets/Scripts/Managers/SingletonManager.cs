@@ -1,3 +1,4 @@
+using CustomDebug;
 using UnityEngine;
 
 /// <summary>
@@ -47,7 +48,7 @@ public abstract class SingletonManager<T> : MonoBehaviour where T : MonoBehaviou
                     // 초기화기가 있으면 그것을 통해 생성 요청
                     if (initializer != null && initializer.IsInitialized)
                     {
-                        Debug.Log($"{typeof(T).Name} 매니저 요청됨 - ManagerInitializer를 통해 생성");
+                        JCDebug.Log($"{typeof(T).Name} 매니저 요청됨 - ManagerInitializer를 통해 생성");
                         _instance = initializer.GetManager(typeof(T)) as T;
                         return _instance;
                     }
@@ -56,7 +57,7 @@ public abstract class SingletonManager<T> : MonoBehaviour where T : MonoBehaviou
                     GameObject obj = new GameObject($"__{typeof(T).Name}");
                     _instance = obj.AddComponent<T>();
 
-                    Debug.Log($"{typeof(T).Name} 매니저 자동 생성됨");
+                    JCDebug.Log($"{typeof(T).Name} 매니저 자동 생성됨");
 
                     // 초기화 메서드 호출
                     (_instance as SingletonManager<T>)?.OnCreated();
@@ -84,7 +85,7 @@ public abstract class SingletonManager<T> : MonoBehaviour where T : MonoBehaviou
         }
         else if (_instance != this)
         {
-            Debug.LogWarning($"이미 {typeof(T).Name} 인스턴스가 존재합니다. 중복 오브젝트 제거됨.");
+            JCDebug.Log($"이미 {typeof(T).Name} 인스턴스가 존재합니다. 중복 오브젝트 제거됨.",JCDebug.LogLevel.Warning);
             Destroy(gameObject);
         }
     }

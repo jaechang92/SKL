@@ -3,6 +3,7 @@ using UnityEngine;
 using Metamorph.Core.Interfaces;
 using Metamorph.Player.Components.Stats;
 using System.Collections;
+using CustomDebug;
 
 namespace Metamorph.Player.Components.Movement
 {
@@ -46,7 +47,7 @@ namespace Metamorph.Player.Components.Movement
         [SerializeField] private float _dashInvulnerabilityTime = 0.1f;
 
         [Header("Debug")]
-        [SerializeField] private bool _showDebugInfo = false;
+        [SerializeField] private bool _HideDebugInfo = false;
         [SerializeField] private bool _drawGizmos = true;
 
 
@@ -137,17 +138,25 @@ namespace Metamorph.Player.Components.Movement
             UpdateJumpBuffer();
             HandleJumpInput();
             UpdateTimers();
+            UpdateDash();
+            UpdateDashCooldown();
         }
 
         private void FixedUpdate()
         {
-            ApplyHorizontalMovement();
+            if (!_isDashing) // ← 대시 중이 아닐 때만 일반 이동
+            {
+                ApplyHorizontalMovement();
+            }
+            else
+            {
+                ApplyDashMovement(); // ← 대시 중일 때는 대시 이동
+            }
+
             ApplyVerticalConstraints();
 
-            if (_showDebugInfo)
-            {
-                LogMovementDebugInfo();
-            }
+            LogMovementDebugInfo();
+            
         }
 
         private void OnDrawGizmos()
@@ -170,12 +179,12 @@ namespace Metamorph.Player.Components.Movement
 
             if (_rb == null)
             {
-                Debug.LogError("[PlayerMovement] Rigidbody2D 컴포넌트를 찾을 수 없습니다!");
+                JCDebug.Log("[PlayerMovement] Rigidbody2D 컴포넌트를 찾을 수 없습니다!",JCDebug.LogLevel.Error);
             }
 
             if (_playerStats == null)
             {
-                Debug.LogWarning("[PlayerMovement] PlayerStats 컴포넌트를 찾을 수 없습니다. 기본값을 사용합니다.");
+                JCDebug.Log("[PlayerMovement] PlayerStats 컴포넌트를 찾을 수 없습니다. 기본값을 사용합니다.",JCDebug.LogLevel.Warning);
             }
         }
 
@@ -188,10 +197,8 @@ namespace Metamorph.Player.Components.Movement
                 groundCheck.transform.localPosition = new Vector3(0, -0.5f, 0);
                 _groundCheckPoint = groundCheck.transform;
 
-                if (_showDebugInfo)
-                {
-                    Debug.Log("[PlayerMovement] GroundCheckPoint가 자동으로 생성되었습니다.");
-                }
+                JCDebug.Log("[PlayerMovement] GroundCheckPoint가 자동으로 생성되었습니다.", JCDebug.LogLevel.Info, _HideDebugInfo);
+                
             }
         }
 
@@ -302,10 +309,9 @@ namespace Metamorph.Player.Components.Movement
         {
             if (!CanDash)
             {
-                if (_showDebugInfo)
-                {
-                    Debug.Log($"[PlayerMovement] 대시 불가 - 쿨다운: {_dashCooldownTimer:F1}s, 공중대시: {_airDashesRemaining}");
-                }
+
+                JCDebug.Log($"[PlayerMovement] 대시 불가 - 쿨다운: {_dashCooldownTimer:F1}s, 공중대시: {_airDashesRemaining}", JCDebug.LogLevel.Info, _HideDebugInfo);
+                
                 return;
             }
 
@@ -338,6 +344,7 @@ namespace Metamorph.Player.Components.Movement
                 {
                     OnLanded?.Invoke();
                     _hasDoubleJump = _allowDoubleJump; // 더블점프 리셋
+                    ResetAirDashes(); // 공중 대시 횟수 리셋
                     _isJumping = false;
                 }
             }
@@ -388,10 +395,9 @@ namespace Metamorph.Player.Components.Movement
 
             OnJumped?.Invoke();
 
-            if (_showDebugInfo)
-            {
-                Debug.Log($"[PlayerMovement] 점프 실행! 힘: {jumpForce}");
-            }
+
+            JCDebug.Log($"[PlayerMovement] 점프 실행! 힘: {jumpForce}", JCDebug.LogLevel.Info, _HideDebugInfo);
+            
         }
 
         private void PerformDoubleJump()
@@ -404,10 +410,7 @@ namespace Metamorph.Player.Components.Movement
 
             OnDoubleJumped?.Invoke();
 
-            if (_showDebugInfo)
-            {
-                Debug.Log($"[PlayerMovement] 더블점프 실행! 힘: {jumpForce}");
-            }
+            JCDebug.Log($"[PlayerMovement] 더블점프 실행! 힘: {jumpForce}", JCDebug.LogLevel.Info, _HideDebugInfo);
         }
 
         #endregion
@@ -466,10 +469,7 @@ namespace Metamorph.Player.Components.Movement
                     _spriteRenderer.flipX = !_facingRight;
                 }
 
-                if (_showDebugInfo)
-                {
-                    Debug.Log($"[PlayerMovement] 방향 전환: {(_facingRight ? "오른쪽" : "왼쪽")}");
-                }
+                JCDebug.Log($"[PlayerMovement] 방향 전환: {(_facingRight ? "오른쪽" : "왼쪽")}", JCDebug.LogLevel.Info, _HideDebugInfo);
             }
         }
 
@@ -519,10 +519,7 @@ namespace Metamorph.Player.Components.Movement
             // 이벤트 발생
             OnDashStarted?.Invoke();
 
-            if (_showDebugInfo)
-            {
-                Debug.Log($"[PlayerMovement] 대시 시작! 방향: {_dashDirection}");
-            }
+            JCDebug.Log($"[PlayerMovement] 대시 시작! 방향: {_dashDirection}", JCDebug.LogLevel.Info, _HideDebugInfo);
         }
 
         /// <summary>
@@ -596,10 +593,7 @@ namespace Metamorph.Player.Components.Movement
             // 이벤트 발생
             OnDashEnded?.Invoke();
 
-            if (_showDebugInfo)
-            {
-                Debug.Log("[PlayerMovement] 대시 종료");
-            }
+            JCDebug.Log("[PlayerMovement] 대시 종료", JCDebug.LogLevel.Info, _HideDebugInfo);
         }
 
         /// <summary>
@@ -679,7 +673,7 @@ namespace Metamorph.Player.Components.Movement
             // 여기에 필요한 타이머 업데이트 로직 추가
             //if (_showDebugInfo)
             //{
-            //    Debug.Log($"[PlayerMovement] 타이머 업데이트: " +
+            //    JCDebug.Log($"[PlayerMovement] 타이머 업데이트: " +
             //              $"점프 버퍼: {_jumpBufferTimer:F2}, " +
             //              $"마지막 접지 시간: {_lastGroundedTime:F2}");
             //}
@@ -693,12 +687,12 @@ namespace Metamorph.Player.Components.Movement
         {
             if (Time.fixedTime % 1f < Time.fixedDeltaTime) // 1초마다 출력
             {
-                Debug.Log($"[PlayerMovement] " +
+                JCDebug.Log($"[PlayerMovement] " +
                          $"Grounded: {_isGrounded}, " +
                          $"Speed: {_currentHorizontalSpeed:F2}, " +
                          $"Velocity: {_rb.velocity}, " +
                          $"CanJump: {CanJump}, " +
-                         $"CanDoubleJump: {CanDoubleJump}");
+                         $"CanDoubleJump: {CanDoubleJump}", JCDebug.LogLevel.Info, _HideDebugInfo);
             }
         }
 
@@ -742,7 +736,7 @@ namespace Metamorph.Player.Components.Movement
         [ContextMenu("현재 상태 출력")]
         private void ContextMenuPrintStatus()
         {
-            Debug.Log($"=== Player Movement Status ===\n" +
+            JCDebug.Log($"=== Player Movement Status ===\n" +
                      $"Grounded: {_isGrounded}\n" +
                      $"Velocity: {_rb?.velocity}\n" +
                      $"Horizontal Speed: {_currentHorizontalSpeed:F2}\n" +
@@ -756,7 +750,7 @@ namespace Metamorph.Player.Components.Movement
         private void ContextMenuRecalculateParameters()
         {
             CalculateMovementParameters();
-            Debug.Log("[PlayerMovement] 움직임 파라미터가 재계산되었습니다.");
+            JCDebug.Log("[PlayerMovement] 움직임 파라미터가 재계산되었습니다.");
         }
 
         #endregion

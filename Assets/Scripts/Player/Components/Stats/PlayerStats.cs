@@ -2,6 +2,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Metamorph.Core.Interfaces;
+using CustomDebug;
 
 namespace Metamorph.Player.Components.Stats
 {
@@ -101,7 +102,7 @@ namespace Metamorph.Player.Components.Stats
         {
             if (form == null)
             {
-                Debug.LogWarning("UpdateFromFormData: Form이 null입니다.");
+                JCDebug.Log("UpdateFromFormData: Form이 null입니다.",JCDebug.LogLevel.Warning);
                 return;
             }
 
@@ -114,7 +115,7 @@ namespace Metamorph.Player.Components.Stats
                 ApplyPassiveEffect(passive.type, passive.value);
             }
 
-            Debug.Log($"[PlayerStats] Form '{form.FormName}'의 스탯이 적용되었습니다.");
+            JCDebug.Log($"[PlayerStats] Form '{form.FormName}'의 스탯이 적용되었습니다.");
         }
 
         /// <summary>
@@ -153,7 +154,7 @@ namespace Metamorph.Player.Components.Stats
 
             if (_showDebugInfo)
             {
-                Debug.Log($"[PlayerStats] 패시브 효과 적용: {type} +{value}");
+                JCDebug.Log($"[PlayerStats] 패시브 효과 적용: {type} +{value}");
             }
         }
 
@@ -168,7 +169,7 @@ namespace Metamorph.Player.Components.Stats
 
                 if (_showDebugInfo)
                 {
-                    Debug.Log($"[PlayerStats] 패시브 효과 제거: {type}");
+                    JCDebug.Log($"[PlayerStats] 패시브 효과 제거: {type}");
                 }
             }
         }
@@ -183,7 +184,7 @@ namespace Metamorph.Player.Components.Stats
 
             if (_showDebugInfo)
             {
-                Debug.Log("[PlayerStats] 모든 패시브 효과가 초기화되었습니다.");
+                JCDebug.Log("[PlayerStats] 모든 패시브 효과가 초기화되었습니다.");
             }
         }
 
@@ -210,7 +211,7 @@ namespace Metamorph.Player.Components.Stats
 
                 if (_showDebugInfo)
                 {
-                    Debug.Log($"[PlayerStats] 체력 변경: {previousHealth:F1} → {_currentHealth:F1}");
+                    JCDebug.Log($"[PlayerStats] 체력 변경: {previousHealth:F1} → {_currentHealth:F1}");
                 }
             }
         }
@@ -314,7 +315,7 @@ namespace Metamorph.Player.Components.Stats
                 default:
                     if (_showDebugInfo)
                     {
-                        Debug.LogWarning($"[PlayerStats] 처리되지 않은 패시브 효과: {type}");
+                        JCDebug.Log($"[PlayerStats] 처리되지 않은 패시브 효과: {type}",JCDebug.LogLevel.Warning);
                     }
                     break;
             }
@@ -398,7 +399,7 @@ namespace Metamorph.Player.Components.Stats
         [ContextMenu("현재 스탯 출력")]
         private void ContextMenuPrintStats()
         {
-            Debug.Log($"=== Player Stats ===\n" +
+            JCDebug.Log($"=== Player Stats ===\n" +
                      $"Base: HP({_baseStats.maxHealth}) SPD({_baseStats.moveSpeed}) JMP({_baseStats.jumpForce})\n" +
                      $"Final: HP({MaxHealth}) SPD({MoveSpeed}) JMP({JumpForce})\n" +
                      $"Current Health: {_currentHealth}/{MaxHealth} ({HealthPercentage:P1})\n" +

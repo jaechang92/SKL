@@ -3,6 +3,7 @@ using UnityEngine;
 using Metamorph.Player.Components.Movement;
 using Metamorph.Player.Components.Stats;
 using System.Collections;
+using CustomDebug;
 
 namespace Metamorph.Player.Components.Animation
 {
@@ -108,17 +109,17 @@ namespace Metamorph.Player.Components.Animation
 
             if (_animator == null)
             {
-                Debug.LogError("[PlayerAnimator] Animator 컴포넌트를 찾을 수 없습니다!");
+                JCDebug.Log("[PlayerAnimator] Animator 컴포넌트를 찾을 수 없습니다!",JCDebug.LogLevel.Error);
             }
 
             if (_playerMovement == null)
             {
-                Debug.LogWarning("[PlayerAnimator] PlayerMovement 컴포넌트를 찾을 수 없습니다!");
+                JCDebug.Log("[PlayerAnimator] PlayerMovement 컴포넌트를 찾을 수 없습니다!", JCDebug.LogLevel.Warning);
             }
 
             if (_playerStats == null)
             {
-                Debug.LogWarning("[PlayerAnimator] PlayerStats 컴포넌트를 찾을 수 없습니다!");
+                JCDebug.Log("[PlayerAnimator] PlayerStats 컴포넌트를 찾을 수 없습니다!", JCDebug.LogLevel.Warning);
             }
         }
 
@@ -236,7 +237,7 @@ namespace Metamorph.Player.Components.Animation
 
             if (_logAnimationEvents)
             {
-                Debug.Log($"[PlayerAnimator] Grounded 상태 변경: {isGrounded}");
+                JCDebug.Log($"[PlayerAnimator] Grounded 상태 변경: {isGrounded}");
             }
         }
 
@@ -252,7 +253,7 @@ namespace Metamorph.Player.Components.Animation
 
             if (_logAnimationEvents)
             {
-                Debug.Log("[PlayerAnimator] 점프 애니메이션 트리거");
+                JCDebug.Log("[PlayerAnimator] 점프 애니메이션 트리거");
             }
         }
 
@@ -262,7 +263,7 @@ namespace Metamorph.Player.Components.Animation
             // 필요시 대시 애니메이션 트리거 추가 가능
             if (_logAnimationEvents)
             {
-                Debug.Log("[PlayerAnimator] 대시 시작 (애니메이션 없음)");
+                JCDebug.Log("[PlayerAnimator] 대시 시작 (애니메이션 없음)");
             }
         }
 
@@ -271,7 +272,7 @@ namespace Metamorph.Player.Components.Animation
             // 대시 종료 시 특별한 애니메이션은 없음
             if (_logAnimationEvents)
             {
-                Debug.Log("[PlayerAnimator] 대시 종료 (애니메이션 없음)");
+                JCDebug.Log("[PlayerAnimator] 대시 종료 (애니메이션 없음)");
             }
         }
 
@@ -282,7 +283,7 @@ namespace Metamorph.Player.Components.Animation
 
             if (_logAnimationEvents)
             {
-                Debug.Log("[PlayerAnimator] 착지 애니메이션 트리거");
+                JCDebug.Log("[PlayerAnimator] 착지 애니메이션 트리거");
             }
         }
 
@@ -293,7 +294,7 @@ namespace Metamorph.Player.Components.Animation
 
             if (_logAnimationEvents)
             {
-                Debug.Log("[PlayerAnimator] 더블점프 애니메이션 트리거");
+                JCDebug.Log("[PlayerAnimator] 더블점프 애니메이션 트리거");
             }
         }
 
@@ -332,7 +333,7 @@ namespace Metamorph.Player.Components.Animation
 
             if (_logAnimationEvents)
             {
-                Debug.Log($"[PlayerAnimator] 공격 애니메이션 재생: {attackTrigger}");
+                JCDebug.Log($"[PlayerAnimator] 공격 애니메이션 재생: {attackTrigger}");
             }
         }
 
@@ -347,7 +348,7 @@ namespace Metamorph.Player.Components.Animation
 
             if (_logAnimationEvents)
             {
-                Debug.Log("[PlayerAnimator] 변신 애니메이션 재생");
+                JCDebug.Log("[PlayerAnimator] 변신 애니메이션 재생");
             }
         }
 
@@ -362,7 +363,7 @@ namespace Metamorph.Player.Components.Animation
 
             if (_logAnimationEvents)
             {
-                Debug.Log($"[PlayerAnimator] 강제 애니메이션 재생: {stateName}");
+                JCDebug.Log($"[PlayerAnimator] 강제 애니메이션 재생: {stateName}");
             }
         }
 
@@ -395,7 +396,7 @@ namespace Metamorph.Player.Components.Animation
 
             if (_logAnimationEvents)
             {
-                Debug.Log("[PlayerAnimator] 데미지 애니메이션 재생");
+                JCDebug.Log("[PlayerAnimator] 데미지 애니메이션 재생");
             }
         }
 
@@ -406,7 +407,7 @@ namespace Metamorph.Player.Components.Animation
 
             if (_logAnimationEvents)
             {
-                Debug.Log("[PlayerAnimator] 사망 애니메이션 재생");
+                JCDebug.Log("[PlayerAnimator] 사망 애니메이션 재생");
             }
         }
 
@@ -475,7 +476,7 @@ namespace Metamorph.Player.Components.Animation
 
             if (_logAnimationEvents)
             {
-                Debug.Log("[PlayerAnimator] 공격 타격 이벤트");
+                JCDebug.Log("[PlayerAnimator] 공격 타격 이벤트");
             }
         }
 
@@ -488,7 +489,7 @@ namespace Metamorph.Player.Components.Animation
 
             if (_logAnimationEvents)
             {
-                Debug.Log("[PlayerAnimator] 애니메이션 완료 이벤트");
+                JCDebug.Log("[PlayerAnimator] 애니메이션 완료 이벤트");
             }
         }
 
@@ -501,7 +502,7 @@ namespace Metamorph.Player.Components.Animation
 
             if (_logAnimationEvents)
             {
-                Debug.Log("[PlayerAnimator] 변신 애니메이션 완료 이벤트");
+                JCDebug.Log("[PlayerAnimator] 변신 애니메이션 완료 이벤트");
             }
         }
 
@@ -514,7 +515,7 @@ namespace Metamorph.Player.Components.Animation
 
             if (_logAnimationEvents)
             {
-                Debug.Log("[PlayerAnimator] 사망 애니메이션 완료 이벤트");
+                JCDebug.Log("[PlayerAnimator] 사망 애니메이션 완료 이벤트");
             }
         }
 
@@ -526,7 +527,7 @@ namespace Metamorph.Player.Components.Animation
             // 발소리 사운드 재생 로직
             if (_logAnimationEvents)
             {
-                Debug.Log("[PlayerAnimator] 발소리 이벤트");
+                JCDebug.Log("[PlayerAnimator] 발소리 이벤트");
             }
         }
 
@@ -537,7 +538,7 @@ namespace Metamorph.Player.Components.Animation
         private void LogAnimationState()
         {
             AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
-            Debug.Log($"[PlayerAnimator] 현재 상태: {stateInfo.fullPathHash}, " +
+            JCDebug.Log($"[PlayerAnimator] 현재 상태: {stateInfo.fullPathHash}, " +
                      $"정규화 시간: {stateInfo.normalizedTime:F2}, " +
                      $"속도: {_animator.GetFloat(_speedParameter):F2}");
         }
@@ -581,7 +582,7 @@ namespace Metamorph.Player.Components.Animation
             AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
             AnimatorClipInfo[] clipInfos = _animator.GetCurrentAnimatorClipInfo(0);
 
-            Debug.Log($"=== Animation State ===\n" +
+            JCDebug.Log($"=== Animation State ===\n" +
                      $"Current State: {stateInfo.fullPathHash}\n" +
                      $"Normalized Time: {stateInfo.normalizedTime:F2}\n" +
                      $"Speed: {_animator.speed}\n" +

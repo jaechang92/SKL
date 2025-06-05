@@ -10,6 +10,7 @@ using Metamorph.Player.Components.Animation;
 using Metamorph.Forms.Base;
 using Metamorph.Player.Skills;
 using Metamorph.Managers;
+using CustomDebug;
 
 /// <summary>
 /// 플레이어의 입력을 처리하고 각 컴포넌트를 조율하는 중앙 컨트롤러
@@ -29,8 +30,9 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
     [SerializeField] private bool _stopMovementDuringAttack = false;
 
     [Header("Debug")]
-    [SerializeField] private bool _showDebugInfo = false;
-    [SerializeField] private bool _logInputEvents = false;
+    [SerializeField] private bool _hideDebugInfo = false;
+    [SerializeField] private bool _hideLogInputEvents = false;
+    [SerializeField] private bool _hideLogInputMove = false;
 
     // 컴포넌트 참조
     private PlayerMovement _playerMovement;
@@ -116,7 +118,7 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
 
         if (_playerMovement == null || _playerStats == null || _playerAnimator == null)
         {
-            Debug.LogError("[PlayerController] 필수 컴포넌트가 누락되었습니다!");
+            JCDebug.Log("[PlayerController] 필수 컴포넌트가 누락되었습니다!", JCDebug.LogLevel.Error);
         }
     }
 
@@ -129,6 +131,7 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
             {
                 { _inputActions.Player.Move, OnMovePerformed },
                 { _inputActions.Player.Jump, OnJumpPerformed },
+                { _inputActions.Player.Dash, OnDashPerformed },
                 { _inputActions.Player.BasicAttack, OnBasicAttackPerformed },
                 { _inputActions.Player.Skill1, OnSkill1Performed },
                 { _inputActions.Player.Skill2, OnSkill2Performed },
@@ -230,6 +233,7 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
 
         // 스탯 업데이트는 PlayerStats가 처리
         _playerStats.UpdateFromFormData(formData);
+        
 
         // 애니메이터 업데이트
         if (_playerAnimator != null && formData.animatorController != null)
@@ -246,6 +250,8 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
                 formData.skillTwo,
                 formData.ultimateSkill
             );
+
+            SkillManager.Instance.RegisterSkillUser(this);
         }
 
         // 변신 애니메이션 재생
@@ -253,10 +259,7 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
 
         OnFormChanged?.Invoke(formData);
 
-        if (_showDebugInfo)
-        {
-            Debug.Log($"[PlayerController] 형태 변경: {formData.formName}");
-        }
+        JCDebug.Log($"[PlayerController] 형태 변경: {formData.formName}", JCDebug.LogLevel.Info, _hideDebugInfo);
     }
 
     #endregion
@@ -267,10 +270,9 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
     {
         _moveInput = context.ReadValue<Vector2>();
 
-        if (_logInputEvents)
-        {
-            Debug.Log($"[PlayerController] 이동 입력: {_moveInput}");
-        }
+
+        JCDebug.Log($"[PlayerController] 이동 입력: {_moveInput}", JCDebug.LogLevel.Info, _hideLogInputEvents || _hideLogInputMove);
+        
     }
 
     private void OnMoveCanceled(InputAction.CallbackContext context)
@@ -290,6 +292,19 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
 
     #endregion
 
+    #region Handlers - Dash
+    private void OnDashPerformed(InputAction.CallbackContext context)
+    {
+        if (_playerMovement != null)
+        {
+            _playerMovement.RequestDash();
+        }
+
+        JCDebug.Log("[PlayerController] Dash 입력", JCDebug.LogLevel.Info, _hideLogInputEvents);        
+    }
+
+    #endregion
+
     #region Input Handlers - Jump
 
     private void OnJumpPerformed(InputAction.CallbackContext context)
@@ -299,10 +314,7 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
             _playerMovement.RequestJump();
         }
 
-        if (_logInputEvents)
-        {
-            Debug.Log("[PlayerController] 점프 입력");
-        }
+        JCDebug.Log("[PlayerController] 점프 입력", JCDebug.LogLevel.Info, _hideLogInputEvents);        
     }
 
     private void OnJumpCanceled(InputAction.CallbackContext context)
@@ -324,25 +336,29 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
             _attackBufferTimer = _attackInputBuffer;
         }
 
-        if (_logInputEvents)
-        {
-            Debug.Log("[PlayerController] 기본 공격 입력");
-        }
+        JCDebug.Log("[PlayerController] 기본 공격 입력", JCDebug.LogLevel.Info, _hideLogInputEvents);
     }
 
     private void OnSkill1Performed(InputAction.CallbackContext context)
     {
         UseSkill(1);
+
+        JCDebug.Log($"[PlayerController] {context.action.name}", JCDebug.LogLevel.Info, _hideLogInputEvents);
+        
     }
 
     private void OnSkill2Performed(InputAction.CallbackContext context)
     {
         UseSkill(2);
+
+        JCDebug.Log($"[PlayerController] {context.action.name}", JCDebug.LogLevel.Info, _hideLogInputEvents);
     }
 
     private void OnSkill3Performed(InputAction.CallbackContext context)
     {
         UseSkill(3);
+
+        JCDebug.Log($"[PlayerController] {context.action.name}", JCDebug.LogLevel.Info, _hideLogInputEvents);
     }
 
     private void UseSkill(int skillIndex)
@@ -353,10 +369,7 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
         {
             StartAttack();
 
-            if (_logInputEvents)
-            {
-                Debug.Log($"[PlayerController] 스킬 {skillIndex} 사용");
-            }
+            JCDebug.Log($"[PlayerController] 스킬 {skillIndex} 사용", JCDebug.LogLevel.Info, _hideLogInputEvents);
         }
     }
 
@@ -370,10 +383,9 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
         {
             FormManager.Instance.SwitchToSecondaryForm();
 
-            if (_logInputEvents)
-            {
-                Debug.Log("[PlayerController] 형태 전환 입력");
-            }
+
+            JCDebug.Log("[PlayerController] 형태 전환 입력", JCDebug.LogLevel.Info, _hideLogInputEvents);
+            
         }
     }
 
@@ -432,10 +444,8 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
     private void HandleAttackHit()
     {
         // 실제 데미지 처리 로직
-        if (_showDebugInfo)
-        {
-            Debug.Log("[PlayerController] 공격 타격!");
-        }
+
+        JCDebug.Log("[PlayerController] 공격 타격!", JCDebug.LogLevel.Info, _hideDebugInfo);
     }
 
     private void HandleAnimationComplete()
@@ -448,10 +458,8 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
 
     private void HandleTransformComplete()
     {
-        if (_showDebugInfo)
-        {
-            Debug.Log("[PlayerController] 변신 완료!");
-        }
+        JCDebug.Log("[PlayerController] 변신 완료!", JCDebug.LogLevel.Info, _hideDebugInfo);
+        
     }
 
     #endregion
@@ -508,10 +516,10 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
         // 스킬 사용 가능 여부 체크
         if (!skill.CanUse())
         {
-            if (_showDebugInfo)
-            {
-                Debug.Log($"[PlayerController] '{skill.SkillName}' 사용 불가 (쿨다운: {skill.GetCooldown():F1}초)");
-            }
+
+            JCDebug.Log($"[PlayerController] '{skill.SkillName}' 사용 불가 (쿨다운: {skill.GetCooldown():F1}초)", 
+                JCDebug.LogLevel.Info, _hideDebugInfo);
+            
             return;
         }
 
@@ -533,10 +541,7 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
             skillEffect.PlayEffect(context.Position);
         }
 
-        if (_showDebugInfo)
-        {
-            Debug.Log($"[PlayerController] '{skill.SkillName}' 사용됨");
-        }
+        JCDebug.Log($"[PlayerController] '{skill.SkillName}' 사용됨", JCDebug.LogLevel.Info, _hideDebugInfo);
     }
 
     public void UseBasicAttack()
@@ -627,7 +632,7 @@ public class PlayerController : MonoBehaviour, ISkillUser, IFormChangeable
     [ContextMenu("현재 상태 출력")]
     private void ContextMenuPrintStatus()
     {
-        Debug.Log($"=== Player Controller Status ===\n" +
+        JCDebug.Log($"=== Player Controller Status ===\n" +
                  $"Can Move: {CanMove}\n" +
                  $"Can Attack: {CanAttack}\n" +
                  $"Is Attacking: {_isAttacking}\n" +

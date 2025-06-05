@@ -1,3 +1,4 @@
+using CustomDebug;
 using Metamorph.Forms.Base;
 using Metamorph.Forms.Data;
 using System;
@@ -25,6 +26,9 @@ namespace Metamorph.Managers
         // 플레이어 컴포넌트 참조
         private PlayerController _playerController;
 
+        [Header("Debug")]
+        [SerializeField] private bool _showDebugInfo = false;
+
         protected override void OnCreated()
         {
             base.OnCreated();
@@ -32,14 +36,14 @@ namespace Metamorph.Managers
             _formDatabase = Resources.Load<FormDatabase>("Databases/FormDatabase");
             _currentForm = _formDatabase.GetDefaultForm(); // 기본 폼 설정
 
-            if (_formDatabase != null)
+            if (_formDatabase != null && _showDebugInfo)
             {
-                Debug.Log("FormDatabase 성공적으로 로드됨");
+                JCDebug.Log("FormDatabase 성공적으로 로드됨");
                 InitializeDefaultForms();
             }
             else
             {
-                Debug.LogError("FormDatabase를 Resources 폴더에서 찾을 수 없습니다!");
+                JCDebug.Log("FormDatabase를 Resources 폴더에서 찾을 수 없습니다!",JCDebug.LogLevel.Error);
             }
         }
 
@@ -77,7 +81,7 @@ namespace Metamorph.Managers
             }
             else
             {
-                Debug.LogError("기본 폼이 FormDatabase에 정의되지 않았습니다!");
+                JCDebug.Log("기본 폼이 FormDatabase에 정의되지 않았습니다!", JCDebug.LogLevel.Error);
             }
 
             // 시작 폼 잠금 해제 (있다면)
@@ -102,7 +106,7 @@ namespace Metamorph.Managers
         {
             if (form == null || string.IsNullOrEmpty(form.formId))
             {
-                Debug.LogError("잘못된 폼을 잠금 해제하려고 시도했습니다.");
+                JCDebug.Log("잘못된 폼을 잠금 해제하려고 시도했습니다.", JCDebug.LogLevel.Error);
                 return;
             }
 
@@ -111,7 +115,7 @@ namespace Metamorph.Managers
                 _unlockedForms.Add(form.formId, form);
 
                 // 획득 이벤트 발생
-                Debug.Log($"새 폼 획득: {form.formName}");
+                JCDebug.Log($"새 폼 획득: {form.formName}");
                 // 여기에 이벤트 시스템 호출 추가
             }
         }
@@ -120,14 +124,14 @@ namespace Metamorph.Managers
         {
             if (string.IsNullOrEmpty(formId))
             {
-                Debug.LogError("빈 formId로 폼을 잠금 해제하려고 시도했습니다.");
+                JCDebug.Log("빈 formId로 폼을 잠금 해제하려고 시도했습니다.", JCDebug.LogLevel.Error);
                 return;
             }
 
             // 이미 잠금 해제되었는지 확인
             if (_unlockedForms.ContainsKey(formId))
             {
-                Debug.Log($"폼 '{formId}'는 이미 잠금 해제되었습니다.");
+                JCDebug.Log($"폼 '{formId}'는 이미 잠금 해제되었습니다.");
                 return;
             }
 
@@ -140,7 +144,7 @@ namespace Metamorph.Managers
             }
             else
             {
-                Debug.LogError($"ID '{formId}'의 폼을 찾을 수 없습니다.");
+                JCDebug.Log($"ID '{formId}'의 폼을 찾을 수 없습니다.", JCDebug.LogLevel.Error);
             }
         }
 
@@ -150,7 +154,7 @@ namespace Metamorph.Managers
             // form이 null이 아니고 잠금 해제되었는지 확인
             if (form == null || !_unlockedForms.ContainsKey(form.formId))
             {
-                Debug.LogWarning("장착할 수 없는 폼입니다: 없거나 잠금 해제되지 않았습니다.");
+                JCDebug.Log("장착할 수 없는 폼입니다: 없거나 잠금 해제되지 않았습니다.",JCDebug.LogLevel.Warning);
                 return;
             }
 
@@ -176,7 +180,7 @@ namespace Metamorph.Managers
         {
             if (_secondaryForm == null)
             {
-                Debug.LogWarning("No secondary form equipped");
+                JCDebug.Log("No secondary form equipped",JCDebug.LogLevel.Warning);
                 return;
             }
 
@@ -225,7 +229,7 @@ namespace Metamorph.Managers
         private void PlayFormSwitchEffect()
         {
             // 여기에 파티클 효과, 사운드 등 추가
-            Debug.Log("Form switch effect played");
+            JCDebug.Log("Form switch effect played");
 
             // 예시: 파티클 시스템 재생
             ParticleSystem switchFx = GetComponent<ParticleSystem>();

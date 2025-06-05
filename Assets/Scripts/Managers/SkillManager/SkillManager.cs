@@ -4,6 +4,7 @@ using UnityEngine.Events;
 using System.Collections.Generic;
 using Metamorph.Core.Interfaces;
 using Metamorph.Forms.Base;
+using CustomDebug;
 
 namespace Metamorph.Managers
 {
@@ -71,7 +72,7 @@ namespace Metamorph.Managers
 
             if (_showDebugInfo)
             {
-                Debug.Log($"[SkillManager] 스킬 사용자 등록됨: {skillUser}");
+                JCDebug.Log($"[SkillManager] 스킬 사용자 등록됨: {skillUser}");
             }
         }
 
@@ -102,7 +103,7 @@ namespace Metamorph.Managers
 
             if (_showDebugInfo)
             {
-                Debug.Log($"[SkillManager] 스킬 업데이트됨 - 기본: {basicAttack?.SkillName}, " +
+                JCDebug.Log($"[SkillManager] 스킬 업데이트됨 - 기본: {basicAttack?.SkillName}, " +
                          $"스킬1: {skill1?.SkillName}, 스킬2: {skill2?.SkillName}, " +
                          $"궁극기: {ultimateSkill?.SkillName}");
             }
@@ -168,7 +169,7 @@ namespace Metamorph.Managers
 
             if (_showDebugInfo)
             {
-                Debug.Log($"[SkillManager] 스킬 {skillIndex} 사용 불가 - 쿨다운: {skill.GetCooldown():F1}초");
+                JCDebug.Log($"[SkillManager] 스킬 {skillIndex} 사용 불가 - 쿨다운: {skill.GetCooldown():F1}초");
             }
 
             return false;
@@ -190,7 +191,7 @@ namespace Metamorph.Managers
 
             if (_showDebugInfo)
             {
-                Debug.Log($"[SkillManager] 궁극기 사용 불가 - 쿨다운: {_ultimateSkill.GetCooldown():F1}초");
+                JCDebug.Log($"[SkillManager] 궁극기 사용 불가 - 쿨다운: {_ultimateSkill.GetCooldown():F1}초");
             }
 
             return false;
@@ -390,7 +391,7 @@ namespace Metamorph.Managers
 
             if (_showDebugInfo)
             {
-                Debug.Log("[SkillManager] 모든 스킬 쿨다운이 초기화되었습니다.");
+                JCDebug.Log("[SkillManager] 모든 스킬 쿨다운이 초기화되었습니다.");
             }
         }
 
@@ -401,7 +402,7 @@ namespace Metamorph.Managers
         [ContextMenu("현재 스킬 상태 출력")]
         private void PrintSkillStatus()
         {
-            Debug.Log($"=== Skill Manager Status ===\n" +
+            JCDebug.Log($"=== Skill Manager Status ===\n" +
                      $"Basic Attack: {_basicAttack?.SkillName ?? "None"}\n" +
                      $"Skill 1: {_skills[0]?.SkillName ?? "None"} (CD: {_skills[0]?.GetCooldown():F1}s)\n" +
                      $"Skill 2: {_skills[1]?.SkillName ?? "None"} (CD: {_skills[1]?.GetCooldown():F1}s)\n" +

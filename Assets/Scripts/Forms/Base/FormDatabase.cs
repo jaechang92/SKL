@@ -1,3 +1,4 @@
+using CustomDebug;
 using Metamorph.Forms.Base;
 using System;
 using System.Collections.Generic;
@@ -63,14 +64,14 @@ namespace Metamorph.Forms.Data
                     // 중복 ID 확인
                     if (_formLookup.ContainsKey(form.formId))
                     {
-                        Debug.LogWarning($"중복된 폼 ID가 발견되었습니다: {form.formId}. 이전 항목이 덮어쓰기됩니다.");
+                        JCDebug.Log($"중복된 폼 ID가 발견되었습니다: {form.formId}. 이전 항목이 덮어쓰기됩니다.",JCDebug.LogLevel.Warning);
                     }
 
                     _formLookup[form.formId] = form;
                 }
                 else if (form != null)
                 {
-                    Debug.LogError($"FormID가 없는 폼이 발견되었습니다: {form.name}");
+                    JCDebug.Log($"FormID가 없는 폼이 발견되었습니다: {form.name}",JCDebug.LogLevel.Error);
                 }
             }
         }
@@ -117,7 +118,7 @@ namespace Metamorph.Forms.Data
                 return form;
             }
 
-            Debug.LogWarning($"ID가 {id}인 폼을 찾을 수 없습니다.");
+            JCDebug.Log($"ID가 {id}인 폼을 찾을 수 없습니다.",JCDebug.LogLevel.Warning);
             return null;
         }
 
