@@ -2,6 +2,7 @@
 using UnityEngine;
 using Metamorph.Core.Interfaces;
 using Metamorph.Player.Components.Stats;
+using System.Collections;
 
 namespace Metamorph.Player.Components.Movement
 {
@@ -30,9 +31,25 @@ namespace Metamorph.Player.Components.Movement
         [SerializeField] private float _jumpCutMultiplier = 0.5f;
         [SerializeField] private bool _allowDoubleJump = false;
 
+        [Header("Dash Settings")]
+        [SerializeField] private float _dashSpeed = 20f;
+        [SerializeField] private float _dashDuration = 0.2f;
+        [SerializeField] private float _dashCooldown = 1f;
+        [SerializeField] private bool _canDashInAir = true;
+        [SerializeField] private int _maxAirDashes = 1;
+        [SerializeField] private bool _dashThroughEnemies = true;
+        [SerializeField] private AnimationCurve _dashCurve = AnimationCurve.EaseInOut(0, 1, 1, 0);
+
+        [Header("Dash Effects")]
+        [SerializeField] private ParticleSystem _dashParticles;
+        [SerializeField] private TrailRenderer _dashTrail;
+        [SerializeField] private float _dashInvulnerabilityTime = 0.1f;
+
         [Header("Debug")]
         [SerializeField] private bool _showDebugInfo = false;
         [SerializeField] private bool _drawGizmos = true;
+
+
 
         // 컴포넌트 참조
         private Rigidbody2D _rb;
@@ -53,6 +70,16 @@ namespace Metamorph.Player.Components.Movement
         private bool _hasDoubleJump;
         private bool _isJumping;
 
+        // Dash 상태 변수
+        private bool _isDashing;
+        private float _dashTimeRemaining;
+        private float _dashCooldownTimer;
+        private Vector2 _dashDirection;
+        private int _airDashesRemaining;
+        private float _originalGravityScale;
+        private int _originalLayer;
+
+
         // 물리 계산용
         private float _horizontalAcceleration;
         private float _horizontalDeceleration;
@@ -63,6 +90,10 @@ namespace Metamorph.Player.Components.Movement
         public System.Action OnJumped;
         public System.Action OnLanded;
         public System.Action OnDoubleJumped;
+        public System.Action OnDashStarted;
+        public System.Action OnDashEnded;
+        public System.Action<float> OnDashCooldownChanged; // currentCooldown
+
 
         #region Properties
 
@@ -77,6 +108,13 @@ namespace Metamorph.Player.Components.Movement
         // 점프 관련 상태
         public bool CanJump => _isGrounded || (_lastGroundedTime + _coyoteTime > Time.time);
         public bool CanDoubleJump => _allowDoubleJump && _hasDoubleJump && !_isGrounded;
+
+        // 대쉬 관련 상태
+        public bool IsDashing => _isDashing;
+        public bool CanDash => !_isDashing && _dashCooldownTimer <= 0 &&
+                              (_isGrounded || (_canDashInAir && _airDashesRemaining > 0));
+        public float DashCooldownRemaining => _dashCooldownTimer;
+
 
         #endregion
 
@@ -186,6 +224,11 @@ namespace Metamorph.Player.Components.Movement
             RequestJump();
         }
 
+        public void Dash(float force)
+        {
+            RequestDash();
+        }
+
         #endregion
 
         #region Public Methods
@@ -250,6 +293,23 @@ namespace Metamorph.Player.Components.Movement
             {
                 OnGroundedChanged?.Invoke(_isGrounded);
             }
+        }
+
+        /// <summary>
+        /// 대시 요청
+        /// </summary>
+        public void RequestDash()
+        {
+            if (!CanDash)
+            {
+                if (_showDebugInfo)
+                {
+                    Debug.Log($"[PlayerMovement] 대시 불가 - 쿨다운: {_dashCooldownTimer:F1}s, 공중대시: {_airDashesRemaining}");
+                }
+                return;
+            }
+
+            StartDash();
         }
 
         #endregion
@@ -415,6 +475,203 @@ namespace Metamorph.Player.Components.Movement
 
         #endregion
 
+        #region Private Methods - Dash
+        
+
+        /// <summary>
+        /// 대시 시작
+        /// </summary>
+        private void StartDash()
+        {
+            _isDashing = true;
+            _dashTimeRemaining = _dashDuration;
+            _dashCooldownTimer = _dashCooldown;
+
+            // 대시 방향 설정 (입력이 없으면 현재 바라보는 방향)
+            if (_moveInput.magnitude > 0.1f)
+            {
+                _dashDirection = _moveInput.normalized;
+            }
+            else
+            {
+                _dashDirection = _facingRight ? Vector2.right : Vector2.left;
+            }
+
+            // 공중 대시 횟수 감소
+            if (!_isGrounded)
+            {
+                _airDashesRemaining--;
+            }
+
+            // 중력 비활성화
+            _originalGravityScale = _rb.gravityScale;
+            _rb.gravityScale = 0f;
+
+            // 대시 중 무적 (옵션)
+            if (_dashInvulnerabilityTime > 0)
+            {
+                SetDashInvulnerability(true);
+            }
+
+            // 이펙트 시작
+            StartDashEffects();
+
+            // 이벤트 발생
+            OnDashStarted?.Invoke();
+
+            if (_showDebugInfo)
+            {
+                Debug.Log($"[PlayerMovement] 대시 시작! 방향: {_dashDirection}");
+            }
+        }
+
+        /// <summary>
+        /// 대시 업데이트 (Update에서 호출)
+        /// </summary>
+        private void UpdateDash()
+        {
+            if (!_isDashing) return;
+
+            _dashTimeRemaining -= Time.deltaTime;
+
+            if (_dashTimeRemaining <= 0)
+            {
+                EndDash();
+            }
+        }
+
+        /// <summary>
+        /// 대시 쿨다운 업데이트 (Update에서 호출)
+        /// </summary>
+        private void UpdateDashCooldown()
+        {
+            if (_dashCooldownTimer > 0)
+            {
+                _dashCooldownTimer -= Time.deltaTime;
+                OnDashCooldownChanged?.Invoke(_dashCooldownTimer);
+            }
+        }
+
+        /// <summary>
+        /// 대시 이동 적용 (FixedUpdate에서 호출)
+        /// </summary>
+        private void ApplyDashMovement()
+        {
+            if (!_isDashing) return;
+
+            // 대시 진행도 (0~1)
+            float dashProgress = 1f - (_dashTimeRemaining / _dashDuration);
+
+            // 커브를 사용한 속도 조절
+            float curveValue = _dashCurve.Evaluate(dashProgress);
+            float currentDashSpeed = _dashSpeed * curveValue;
+
+            // 대시 속도 적용
+            _rb.velocity = _dashDirection * currentDashSpeed;
+        }
+
+        /// <summary>
+        /// 대시 종료
+        /// </summary>
+        private void EndDash()
+        {
+            _isDashing = false;
+
+            // 중력 복구
+            _rb.gravityScale = _originalGravityScale;
+
+            // 대시 후 속도 조절 (급정지 방지)
+            float remainingSpeed = _currentHorizontalSpeed * 0.5f; // 50% 속도 유지
+            _rb.velocity = new Vector2(remainingSpeed, _rb.velocity.y);
+
+            // 무적 해제
+            if (_dashInvulnerabilityTime > 0)
+            {
+                StartCoroutine(EndDashInvulnerabilityCoroutine());
+            }
+
+            // 이펙트 종료
+            EndDashEffects();
+
+            // 이벤트 발생
+            OnDashEnded?.Invoke();
+
+            if (_showDebugInfo)
+            {
+                Debug.Log("[PlayerMovement] 대시 종료");
+            }
+        }
+
+        /// <summary>
+        /// 대시 무적 설정
+        /// </summary>
+        private void SetDashInvulnerability(bool invulnerable)
+        {
+            if (_dashThroughEnemies)
+            {
+                if (invulnerable)
+                {
+                    _originalLayer = gameObject.layer;
+                    gameObject.layer = LayerMask.NameToLayer("DashInvulnerable"); // 별도 레이어 필요
+                }
+                else
+                {
+                    gameObject.layer = _originalLayer;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 대시 무적 종료 코루틴
+        /// </summary>
+        private IEnumerator EndDashInvulnerabilityCoroutine()
+        {
+            yield return new WaitForSeconds(_dashInvulnerabilityTime);
+            SetDashInvulnerability(false);
+        }
+
+        /// <summary>
+        /// 대시 이펙트 시작
+        /// </summary>
+        private void StartDashEffects()
+        {
+            if (_dashParticles != null)
+            {
+                _dashParticles.Play();
+            }
+
+            if (_dashTrail != null)
+            {
+                _dashTrail.emitting = true;
+            }
+        }
+
+        /// <summary>
+        /// 대시 이펙트 종료
+        /// </summary>
+        private void EndDashEffects()
+        {
+            if (_dashParticles != null)
+            {
+                _dashParticles.Stop();
+            }
+
+            if (_dashTrail != null)
+            {
+                _dashTrail.emitting = false;
+            }
+        }
+
+        /// <summary>
+        /// 공중 대시 횟수 리셋 (착지 시 호출)
+        /// </summary>
+        private void ResetAirDashes()
+        {
+            _airDashesRemaining = _maxAirDashes;
+        }
+
+        #endregion
+
         #region Private Methods - Timers & Updates
 
         private void UpdateTimers()
@@ -539,6 +796,8 @@ namespace Metamorph.Player.Components.Movement
             if (onLanded != null) OnLanded -= onLanded;
             if (onDoubleJumped != null) OnDoubleJumped -= onDoubleJumped;
         }
+
+
 
         #endregion
     }

@@ -157,6 +157,8 @@ namespace Metamorph.Player.Components.Animation
                 _playerMovement.OnJumped += HandleJumped;
                 _playerMovement.OnLanded += HandleLanded;
                 _playerMovement.OnDoubleJumped += HandleDoubleJumped;
+                _playerMovement.OnDashStarted += HandleDashStarted;
+                _playerMovement.OnDashEnded += HandleDashEnded;
             }
 
             if (_playerStats != null)
@@ -174,6 +176,8 @@ namespace Metamorph.Player.Components.Animation
                 _playerMovement.OnJumped -= HandleJumped;
                 _playerMovement.OnLanded -= HandleLanded;
                 _playerMovement.OnDoubleJumped -= HandleDoubleJumped;
+                _playerMovement.OnDashStarted -= HandleDashStarted;
+                _playerMovement.OnDashEnded -= HandleDashEnded;
             }
 
             if (_playerStats != null)
@@ -249,6 +253,25 @@ namespace Metamorph.Player.Components.Animation
             if (_logAnimationEvents)
             {
                 Debug.Log("[PlayerAnimator] 점프 애니메이션 트리거");
+            }
+        }
+
+        private void HandleDashStarted()
+        {
+            // 대시 애니메이션은 별도로 구현하지 않음
+            // 필요시 대시 애니메이션 트리거 추가 가능
+            if (_logAnimationEvents)
+            {
+                Debug.Log("[PlayerAnimator] 대시 시작 (애니메이션 없음)");
+            }
+        }
+
+        private void HandleDashEnded()
+        {
+            // 대시 종료 시 특별한 애니메이션은 없음
+            if (_logAnimationEvents)
+            {
+                Debug.Log("[PlayerAnimator] 대시 종료 (애니메이션 없음)");
             }
         }
 

@@ -22,7 +22,7 @@ MonoBehaviour:
   type: 0
   category: 0
   maxHealth: 0
-  moveSpeed: 15
+  moveSpeed: 10
   jumpForce: 10
   basicAttack: {fileID: 11400000, guid: 28aa06806a09f99498a888e5cd6038e8, type: 2}
   skillOne: {fileID: 11400000, guid: def46eacb5844434e9de6944aed8250b, type: 2}

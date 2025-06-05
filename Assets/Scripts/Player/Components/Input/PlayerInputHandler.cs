@@ -33,6 +33,7 @@ namespace Metamorph.Player.Components
             {
                 { _inputActions.Player.BasicAttack, OnBasicAttackPerformed },
                 { _inputActions.Player.Jump, OnJumpPerformed },
+                { _inputActions.Player.Dash, OnDashPerformed },
                 { _inputActions.Player.Skill1, OnSkill1Performed },
                 { _inputActions.Player.Skill2, OnSkill2Performed },
                 { _inputActions.Player.Skill3, OnSkill3Performed },
@@ -64,6 +65,10 @@ namespace Metamorph.Player.Components
         private void OnJumpPerformed(InputAction.CallbackContext context)
         {
             _moveable?.Jump(10f); // 점프 힘은 설정값으로 관리
+        }
+        private void OnDashPerformed(InputAction.CallbackContext context)
+        {
+           _moveable?.Dash(10f); // 대시 힘은 설정값으로 관리
         }
 
         // 기타 입력 처리 메서드들...

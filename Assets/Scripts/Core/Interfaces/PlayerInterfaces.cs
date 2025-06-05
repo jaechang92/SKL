@@ -7,6 +7,8 @@ namespace Metamorph.Core.Interfaces
     {
         void Move(Vector2 direction);
         void Jump(float force);
+
+        void Dash(float force);
     }
 
     public interface ISkillUser

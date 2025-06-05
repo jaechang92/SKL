@@ -44,6 +44,7 @@ namespace Metamorph.Player.Components.Stats
         public float MaxHealth => _finalStats.maxHealth;
         public float MoveSpeed => _finalStats.moveSpeed;
         public float JumpForce => _finalStats.jumpForce;
+        public float DashForce => _finalStats.moveSpeed * 1.5f; // 예시: 대시 속도는 이동 속도의 1.5배
 
         // 체력 관련
         public float CurrentHealth => _currentHealth;
@@ -347,10 +348,10 @@ namespace Metamorph.Player.Components.Stats
             [Range(1, 1000)]
             public float maxHealth;
 
-            [Range(0.1f, 50)]
+            [Range(0.1f, 500)]
             public float moveSpeed;
 
-            [Range(0.1f, 100)]
+            [Range(0.1f, 1000)]
             public float jumpForce;
 
             public PlayerBaseStats(float health, float speed, float jump)
