@@ -175,8 +175,9 @@ MonoBehaviour:
   _attackInputBuffer: 0.2
   _canAttackInAir: 1
   _stopMovementDuringAttack: 0
-  _showDebugInfo: 0
-  _logInputEvents: 0
+  _hideDebugInfo: 1
+  _hideLogInputEvents: 1
+  _hideLogInputMove: 1
 --- !u!212 &85477600
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -493,7 +494,7 @@ MonoBehaviour:
   _jumpBufferTime: 0.2
   _jumpCutMultiplier: 0.5
   _allowDoubleJump: 0
-  _dashSpeed: 20
+  _dashSpeed: 40
   _dashDuration: 0.2
   _dashCooldown: 1
   _canDashInAir: 1
@@ -526,7 +527,7 @@ MonoBehaviour:
   _dashParticles: {fileID: 0}
   _dashTrail: {fileID: 0}
   _dashInvulnerabilityTime: 0.1
-  _showDebugInfo: 0
+  _HideDebugInfo: 1
   _drawGizmos: 1
 --- !u!1 &183108795
 GameObject:
@@ -571,6 +572,7 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
+  - component: {fileID: 330585548}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -696,6 +698,22 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!114 &330585548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d4de7d3e2c3e334dbce75016bc50753, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  followSpeed: 5
+  offset: {x: 0, y: 0, z: -10}
+  mapBoundary: {fileID: 0}
+  boundaryCollider: {fileID: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System;
 using Metamorph.Forms.Base;
 using Metamorph.Managers;
+using CustomDebug;
 
 /// <summary>
 /// 스킬 키 리매핑 및 슬롯 관리 시스템
@@ -162,7 +163,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
         }
         else
         {
-            Debug.LogWarning("FormManager를 찾을 수 없습니다. Form 변경 이벤트를 구독할 수 없습니다.");
+            JCDebug.Log("FormManager를 찾을 수 없습니다. Form 변경 이벤트를 구독할 수 없습니다.", JCDebug.LogLevel.Warning);
         }
     }
 
@@ -173,7 +174,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
     {
         if (!autoUpdateOnFormChange) return;
 
-        Debug.Log($"🔄 Form 변경 감지: {newForm.formName}");
+        JCDebug.Log($"🔄 Form 변경 감지: {newForm.formName}");
 
         // 현재 커스텀 매핑 저장 (필요시)
         if (preserveCustomMappings && currentForm != null)
@@ -236,7 +237,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
             skillSlots[3].slotType = SkillSlotType.Ultimate;
         }
 
-        Debug.Log($"✅ {form.formName}의 스킬들이 슬롯에 할당되었습니다.");
+        JCDebug.Log($"✅ {form.formName}의 스킬들이 슬롯에 할당되었습니다.");
     }
 
     /// <summary>
@@ -280,7 +281,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
             skillSlots[i].isLocked = preset[i].isLocked;
         }
 
-        Debug.Log($"📂 {formId} Form의 키 설정을 로드했습니다.");
+        JCDebug.Log($"📂 {formId} Form의 키 설정을 로드했습니다.");
     }
 
     #endregion
@@ -292,7 +293,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
         if (inputActions == null)
         {
             inputActions = new PlayerInputActions();
-            Debug.LogWarning("🔧 PlayerInputActions가 설정되지 않았습니다. 기본 Input Actions를 생성합니다.");
+            JCDebug.Log("🔧 PlayerInputActions가 설정되지 않았습니다. 기본 Input Actions를 생성합니다.", JCDebug.LogLevel.Warning);
         }
 
         inputActions.Enable();
@@ -332,7 +333,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
                 slot.currentKey = slot.defaultKey;
         }
 
-        Debug.Log("🔧 스킬 슬롯 초기화 완료");
+        JCDebug.Log("🔧 스킬 슬롯 초기화 완료");
     }
 
     private void SetupInputActions()
@@ -343,7 +344,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
 
             if (slotActions[i] == null)
             {
-                Debug.LogError($"❌ Action '{ACTION_NAMES[i]}'를 찾을 수 없습니다! Input Action Asset을 확인해주세요.");
+                JCDebug.Log($"❌ Action '{ACTION_NAMES[i]}'를 찾을 수 없습니다! Input Action Asset을 확인해주세요.",JCDebug.LogLevel.Error);
             }
         }
     }
@@ -394,9 +395,9 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
         if (!slot.CanUse)
         {
             if (slot.IsEmpty)
-                Debug.Log($"⚪ {slot.displayName} 슬롯이 비어있습니다.");
+                JCDebug.Log($"⚪ {slot.displayName} 슬롯이 비어있습니다.");
             else if (slot.isLocked)
-                Debug.Log($"🔒 {slot.displayName} 슬롯이 잠겨있습니다.");
+                JCDebug.Log($"🔒 {slot.displayName} 슬롯이 잠겨있습니다.");
             return;
         }
 
@@ -420,14 +421,14 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
             }
 
             string keyDisplay = GetKeyDisplayName(slot.GetCurrentKey());
-            Debug.Log($"🎯 {slot.displayName} ({keyDisplay}): '{slot.assignedSkill?.skillName}' 사용!");
+            JCDebug.Log($"🎯 {slot.displayName} ({keyDisplay}): '{slot.assignedSkill?.skillName}' 사용!");
 
             // 이벤트 발생
             OnSkillUsed?.Invoke(slotIndex, slot.assignedSkill);
         }
         else
         {
-            Debug.LogError("SkillManager를 찾을 수 없습니다!");
+            JCDebug.Log("SkillManager를 찾을 수 없습니다!",JCDebug.LogLevel.Error);
         }
     }
 
@@ -443,7 +444,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
 
         if (slot.isLocked)
         {
-            Debug.LogWarning($"⚠️ {slot.displayName} 슬롯이 잠겨있어 스킬을 할당할 수 없습니다.");
+            JCDebug.Log($"⚠️ {slot.displayName} 슬롯이 잠겨있어 스킬을 할당할 수 없습니다.",JCDebug.LogLevel.Warning);
             return false;
         }
 
@@ -452,7 +453,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
 
         string skillName = skill?.skillName ?? "없음";
         string prevSkillName = previousSkill?.skillName ?? "없음";
-        Debug.Log($"🔄 {slot.displayName}: '{prevSkillName}' → '{skillName}'");
+        JCDebug.Log($"🔄 {slot.displayName}: '{prevSkillName}' → '{skillName}'");
 
         // 이벤트 발생
         OnSkillChanged?.Invoke(slotIndex, previousSkill, skill);
@@ -480,7 +481,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
         bool isValid = slotIndex >= 0 && slotIndex < skillSlots.Length;
         if (!isValid)
         {
-            Debug.LogWarning($"⚠️ 잘못된 슬롯 인덱스: {slotIndex}");
+            JCDebug.Log($"⚠️ 잘못된 슬롯 인덱스: {slotIndex}",JCDebug.LogLevel.Warning);
         }
         return isValid;
     }
@@ -524,10 +525,10 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
 
     private void LogSystemInfo()
     {
-        Debug.Log("🚀 스킬 & 키 리매핑 시스템 초기화 완료");
-        Debug.Log($"   - 슬롯 수: {skillSlots.Length}");
-        Debug.Log($"   - 자동 저장: {autoSave}");
-        Debug.Log($"   - Form 연동: {autoUpdateOnFormChange}");
+        JCDebug.Log("🚀 스킬 & 키 리매핑 시스템 초기화 완료");
+        JCDebug.Log($"   - 슬롯 수: {skillSlots.Length}");
+        JCDebug.Log($"   - 자동 저장: {autoSave}");
+        JCDebug.Log($"   - Form 연동: {autoUpdateOnFormChange}");
     }
 
     #endregion
@@ -537,10 +538,10 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
     private void HandleDebugInput()
     {
         // F1-F4: 각 슬롯 키 리매핑 시작 (키 리매핑 기능이 구현되어 있다면)
-        if (Keyboard.current.f1Key.wasPressedThisFrame) Debug.Log("F1: 기본 공격 키 리매핑");
-        if (Keyboard.current.f2Key.wasPressedThisFrame) Debug.Log("F2: 스킬1 키 리매핑");
-        if (Keyboard.current.f3Key.wasPressedThisFrame) Debug.Log("F3: 스킬2 키 리매핑");
-        if (Keyboard.current.f4Key.wasPressedThisFrame) Debug.Log("F4: 궁극기 키 리매핑");
+        if (Keyboard.current.f1Key.wasPressedThisFrame) JCDebug.Log("F1: 기본 공격 키 리매핑");
+        if (Keyboard.current.f2Key.wasPressedThisFrame) JCDebug.Log("F2: 스킬1 키 리매핑");
+        if (Keyboard.current.f3Key.wasPressedThisFrame) JCDebug.Log("F3: 스킬2 키 리매핑");
+        if (Keyboard.current.f4Key.wasPressedThisFrame) JCDebug.Log("F4: 궁극기 키 리매핑");
 
         // 기타 디버그 키들
         if (Keyboard.current.f5Key.wasPressedThisFrame) PrintCurrentConfiguration();
@@ -550,7 +551,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
 
     public void PrintCurrentConfiguration()
     {
-        Debug.Log("=== 현재 스킬 & 키 설정 ===");
+        JCDebug.Log("=== 현재 스킬 & 키 설정 ===");
 
         for (int i = 0; i < skillSlots.Length; i++)
         {
@@ -559,7 +560,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
             string skillName = slot.assignedSkill?.skillName ?? "없음";
             string status = slot.isLocked ? " (잠김)" : "";
 
-            Debug.Log($"{slot.displayName}: {keyDisplay} → {skillName}{status}");
+            JCDebug.Log($"{slot.displayName}: {keyDisplay} → {skillName}{status}");
         }
     }
 
@@ -589,7 +590,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
         PlayerPrefs.SetString(saveKey, json);
         PlayerPrefs.Save();
 
-        Debug.Log("💾 스킬 설정이 저장되었습니다.");
+        JCDebug.Log("💾 스킬 설정이 저장되었습니다.");
         OnDataSaved?.Invoke();
     }
 
@@ -597,7 +598,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
     {
         if (!PlayerPrefs.HasKey(saveKey))
         {
-            Debug.Log("📁 저장된 스킬 설정이 없습니다. 기본 설정을 사용합니다.");
+            JCDebug.Log("📁 저장된 스킬 설정이 없습니다. 기본 설정을 사용합니다.");
             return;
         }
 
@@ -626,12 +627,12 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
                 }
             }
 
-            Debug.Log($"📂 스킬 설정이 로드되었습니다.");
+            JCDebug.Log($"📂 스킬 설정이 로드되었습니다.");
             OnDataLoaded?.Invoke();
         }
         catch (Exception ex)
         {
-            Debug.LogError($"❌ 스킬 설정 로드 중 오류 발생: {ex.Message}");
+            JCDebug.Log($"❌ 스킬 설정 로드 중 오류 발생: {ex.Message}", JCDebug.LogLevel.Error);
         }
     }
 
