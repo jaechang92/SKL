@@ -17,7 +17,6 @@ public class GameManager : SingletonManager<GameManager>
     [Header("Game Settings")]
     [SerializeField] private bool autoFindPlayer = true;
     [SerializeField] private bool autoFindCamera = true;
-    [SerializeField] private bool debugMode = true;
 
     // 게임 상태
     public bool IsGameInitialized { get; private set; } = false;
@@ -173,13 +172,12 @@ public class GameManager : SingletonManager<GameManager>
     /// <summary>
     /// 디버그 정보 출력
     /// </summary>
-    void Update()
+    [ContextMenu("GameManager Status - Initialized")]
+    void ShowDebug()
     {
-        if (debugMode && Input.GetKeyDown(KeyCode.G))
-        {
-            JCDebug.Log($"GameManager Status - Initialized: {IsGameInitialized}, " +
+        JCDebug.Log($"GameManager Status - Initialized: {IsGameInitialized}, " +
                      $"Player: {(player != null ? player.name : "None")}, " +
                      $"Camera: {(cameraController != null ? "OK" : "Missing")}");
-        }
     }
+
 }

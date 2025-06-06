@@ -80,7 +80,7 @@ public class ManagerInitializer : SingletonManager<ManagerInitializer>
     {
         // 코어 시스템 매니저들 (데이터, 세이브, 네트워크 등)
         CreateManager<SkillRemappingSystem>("Core");
-        //CreateManager<GameManager>("Core");
+        CreateManager<GameManager>("Core");
         //CreateManager<SaveManager>("Core");
         //CreateManager<DataManager>("Core");
         // 필요한 다른 코어 매니저들...

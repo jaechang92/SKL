@@ -1,3 +1,4 @@
+using CustomDebug;
 using UnityEngine;
 
 public class CameraController : SingletonManager<CameraController>
@@ -16,6 +17,9 @@ public class CameraController : SingletonManager<CameraController>
     private CameraSmoothFollow smoothFollow;
     private CameraEventHandler eventHandler;
 
+    // SmoothDamp용 속도 변수 추가
+    private Vector3 velocity = Vector3.zero;
+
     protected override void Awake()
     {
         base.Awake();
@@ -28,7 +32,7 @@ public class CameraController : SingletonManager<CameraController>
         RegisterEvents();
     }
 
-    void LateUpdate()
+    private void FixedUpdate()
     {
         if (target != null)
         {
@@ -75,13 +79,17 @@ public class CameraController : SingletonManager<CameraController>
         eventHandler.UnregisterPortalEvents();
     }
 
-    // 메인 카메라 위치 업데이트 로직
+
+    // 메인 카메라 위치 업데이트 로직 SmoothDamp 사용으로 더 부드러운 움직임
     private void UpdateCameraPosition()
     {
         Vector3 desiredPosition = smoothFollow.CalculateDesiredPosition(target.position, offset);
         Vector3 clampedPosition = boundaryChecker.ClampToBoundaries(desiredPosition);
 
-        transform.position = smoothFollow.SmoothMove(transform.position, clampedPosition, followSpeed, Time.deltaTime);
+        // SmoothDamp 사용 (Lerp 대신)
+        float smoothTime = 1f / followSpeed; // speed에서 smoothTime 계산
+        Vector3 newPosition = Vector3.SmoothDamp(transform.position, clampedPosition, ref velocity, smoothTime);
+        transform.position = newPosition;
     }
 
     // 외부 인터페이스
