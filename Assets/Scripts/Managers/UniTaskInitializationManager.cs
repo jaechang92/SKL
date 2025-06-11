@@ -411,13 +411,15 @@ namespace Metamorph.Initialization
             }
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource?.Dispose();
             _observers.Clear();
             _initializables.Clear();
             _steps.Clear();
         }
+
     }
 }
