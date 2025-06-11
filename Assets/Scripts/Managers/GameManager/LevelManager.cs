@@ -1,4 +1,4 @@
-// ============= GameManager.cs =============
+// ============= LevelManager.cs =============
 using UnityEngine;
 using System.Collections;
 using CustomDebug;
@@ -7,7 +7,7 @@ using CustomDebug;
 /// 게임 전체를 관리하는 매니저 클래스
 /// 의존성: CameraController, Player, PortalManager
 /// </summary>
-public class GameManager : SingletonManager<GameManager>
+public class LevelManager : SingletonManager<LevelManager>
 {
     [Header("Game References")]
     [SerializeField] private Transform player;
@@ -33,7 +33,7 @@ public class GameManager : SingletonManager<GameManager>
     /// </summary>
     private IEnumerator InitializeGame()
     {
-        JCDebug.Log("GameManager: Starting game initialization...");
+        JCDebug.Log("LevelManager: Starting game initialization...");
 
         // 1단계: 필수 컴포넌트 찾기
         yield return StartCoroutine(FindRequiredComponents());
@@ -46,7 +46,7 @@ public class GameManager : SingletonManager<GameManager>
 
         // 초기화 완료
         IsGameInitialized = true;
-        JCDebug.Log("GameManager: Game initialization completed!");
+        JCDebug.Log("LevelManager: Game initialization completed!");
     }
 
     /// <summary>
@@ -61,11 +61,11 @@ public class GameManager : SingletonManager<GameManager>
             if (playerObj != null)
             {
                 player = playerObj.transform;
-                JCDebug.Log($"GameManager: Player found automatically - {player.name}");
+                JCDebug.Log($"LevelManager: Player found automatically - {player.name}");
             }
             else
             {
-                JCDebug.Log("GameManager: Player not found! Please assign player or add 'Player' tag.",JCDebug.LogLevel.Error);
+                JCDebug.Log("LevelManager: Player not found! Please assign player or add 'Player' tag.", JCDebug.LogLevel.Error);
             }
         }
 
@@ -75,11 +75,11 @@ public class GameManager : SingletonManager<GameManager>
             cameraController = FindAnyObjectByType<CameraController>();
             if (cameraController != null)
             {
-                JCDebug.Log($"GameManager: CameraController found automatically - {cameraController.name}");
+                JCDebug.Log($"LevelManager: CameraController found automatically - {cameraController.name}");
             }
             else
             {
-                JCDebug.Log("GameManager: CameraController not found!",JCDebug.LogLevel.Error);
+                JCDebug.Log("LevelManager: CameraController not found!", JCDebug.LogLevel.Error);
             }
         }
 
@@ -90,7 +90,7 @@ public class GameManager : SingletonManager<GameManager>
             if (boundaryObj != null)
             {
                 mapBoundary = boundaryObj.GetComponent<BoxCollider2D>();
-                JCDebug.Log($"GameManager: Map boundary found automatically - {boundaryObj.name}");
+                JCDebug.Log($"LevelManager: Map boundary found automatically - {boundaryObj.name}");
             }
         }
 
@@ -106,20 +106,20 @@ public class GameManager : SingletonManager<GameManager>
         {
             // 카메라 타겟 설정
             cameraController.SetTarget(player);
-            JCDebug.Log("GameManager: Camera target set to player");
+            JCDebug.Log("LevelManager: Camera target set to player");
 
             // 맵 경계 설정
             if (mapBoundary != null)
             {
                 cameraController.UpdateBoundaries(mapBoundary);
-                JCDebug.Log("GameManager: Camera boundaries updated");
+                JCDebug.Log("LevelManager: Camera boundaries updated");
             }
 
             yield return new WaitForSeconds(0.1f);
         }
         else
         {
-            JCDebug.Log("GameManager: Cannot initialize camera - missing CameraController or Player!", JCDebug.LogLevel.Error);
+            JCDebug.Log("LevelManager: Cannot initialize camera - missing CameraController or Player!", JCDebug.LogLevel.Error);
         }
     }
 
@@ -155,7 +155,7 @@ public class GameManager : SingletonManager<GameManager>
             // 카메라 즉시 이동
             cameraController.SetTargetImmediate(player, playerStartPosition);
 
-            JCDebug.Log($"GameManager: New level loaded - Player at {playerStartPosition}");
+            JCDebug.Log($"LevelManager: New level loaded - Player at {playerStartPosition}");
         }
     }
 
@@ -166,16 +166,16 @@ public class GameManager : SingletonManager<GameManager>
     public void SetGamePaused(bool isPaused)
     {
         Time.timeScale = isPaused ? 0f : 1f;
-        JCDebug.Log($"GameManager: Game {(isPaused ? "paused" : "resumed")}");
+        JCDebug.Log($"LevelManager: Game {(isPaused ? "paused" : "resumed")}");
     }
 
     /// <summary>
     /// 디버그 정보 출력
     /// </summary>
-    [ContextMenu("GameManager Status - Initialized")]
+    [ContextMenu("LevelManager Status - Initialized")]
     void ShowDebug()
     {
-        JCDebug.Log($"GameManager Status - Initialized: {IsGameInitialized}, " +
+        JCDebug.Log($"LevelManager Status - Initialized: {IsGameInitialized}, " +
                      $"Player: {(player != null ? player.name : "None")}, " +
                      $"Camera: {(cameraController != null ? "OK" : "Missing")}");
     }

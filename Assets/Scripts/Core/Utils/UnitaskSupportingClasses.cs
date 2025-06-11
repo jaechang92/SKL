@@ -1,0 +1,271 @@
+using System;
+using System.Threading;
+using UnityEngine;
+using Cysharp.Threading.Tasks;
+using Metamorph.Core.Interfaces;
+using System.Linq;
+using Metamorph.Initialization;
+
+namespace Metamorph.Initialization
+{
+    /// <summary>
+    /// UniTask 기반 초기화 시스템 부트스트랩 클래스
+    /// </summary>
+    public class UniTaskInitializationBootstrap : MonoBehaviour
+    {
+        [Header("Bootstrap Configuration")]
+        [SerializeField] private bool _autoStartInitialization = true;
+        [SerializeField] private bool _createDebugUI = true;
+        [SerializeField] private InitializationSettings _initializationSettings = new InitializationSettings();
+
+        private void Start()
+        {
+            if (_autoStartInitialization)
+            {
+                SetupInitializationSystem().Forget();
+            }
+        }
+
+        /// <summary>
+        /// 초기화 시스템 설정 및 시작
+        /// </summary>
+        public async UniTaskVoid SetupInitializationSystem()
+        {
+            var initManager = UniTaskInitializationManager.Instance;
+
+            // 설정 적용
+            initManager.Settings.timeoutSeconds = _initializationSettings.timeoutSeconds;
+            initManager.Settings.maxRetryAttempts = _initializationSettings.maxRetryAttempts;
+            initManager.Settings.allowConcurrentInitialization = _initializationSettings.allowConcurrentInitialization;
+
+            // 디버그 UI 생성 (옵션)
+            if (_createDebugUI)
+            {
+                CreateDebugObserver();
+            }
+
+            // 수동으로 초기화 시스템 시작하려면:
+            try
+            {
+                await initManager.InitializeAllAsync(destroyCancellationToken);
+                Debug.Log("[Bootstrap] 초기화 시스템 설정 완료");
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.LogWarning("[Bootstrap] 초기화 시스템 설정이 취소됨");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Bootstrap] 초기화 시스템 설정 실패: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 디버그용 관찰자 생성
+        /// </summary>
+        private void CreateDebugObserver()
+        {
+            GameObject debugObj = new GameObject("InitializationDebugObserver");
+            debugObj.transform.SetParent(transform);
+            debugObj.AddComponent<UniTaskInitializationDebugObserver>();
+        }
+    }
+
+    /// <summary>
+    /// UniTask 기반 초기화 진행상황을 디버그로 출력하는 관찰자
+    /// </summary>
+    public class UniTaskInitializationDebugObserver : MonoBehaviour, IInitializationObserver
+    {
+        private void Start()
+        {
+            UniTaskInitializationManager.Instance.RegisterObserver(this);
+        }
+
+        public void OnInitializationStepStarted(InitializationStep step)
+        {
+            Debug.Log($"[DEBUG] 초기화 시작: {step.StepName}");
+        }
+
+        public void OnInitializationStepCompleted(InitializationStep step)
+        {
+            Debug.Log($"[DEBUG] 초기화 완료: {step.StepName} (소요시간: {step.Duration.TotalSeconds:F2}초)");
+        }
+
+        public void OnInitializationStepFailed(InitializationStep step, Exception error)
+        {
+            Debug.LogError($"[DEBUG] 초기화 실패: {step.StepName} - {error.Message}");
+        }
+
+        public void OnAllInitializationCompleted(TimeSpan totalDuration)
+        {
+            Debug.Log($"[DEBUG] 모든 초기화 완료! 총 소요시간: {totalDuration.TotalSeconds:F2}초");
+        }
+
+        public void OnInitializationProgressUpdated(float progress)
+        {
+            Debug.Log($"[DEBUG] 초기화 진행률: {progress * 100:F1}%");
+        }
+
+        public void OnInitializationCancelled()
+        {
+            Debug.LogWarning("[DEBUG] 초기화가 취소되었습니다!");
+        }
+
+        private void OnDestroy()
+        {
+            if (UniTaskInitializationManager.Instance != null)
+            {
+                UniTaskInitializationManager.Instance.UnregisterObserver(this);
+            }
+        }
+    }
+}
+
+
+namespace Metamorph.UI
+{
+    /// <summary>
+    /// UniTask 기반 사용법 예시 클래스
+    /// </summary>
+    public class UniTaskInitializationUsageExample : MonoBehaviour
+    {
+        private void Start()
+        {
+            // 초기화 시스템 사용 예시
+            ExampleUsage().Forget();
+        }
+
+        private async UniTaskVoid ExampleUsage()
+        {
+            var initManager = UniTaskInitializationManager.Instance;
+
+            try
+            {
+                // 1. 커스텀 관찰자 등록
+                var customObserver = gameObject.AddComponent<CustomUniTaskInitializationObserver>();
+                initManager.RegisterObserver(customObserver);
+
+                // 2. 추가 초기화 객체 등록
+                var customInitializer = gameObject.AddComponent<CustomUniTaskInitializer>();
+                initManager.RegisterInitializable(customInitializer);
+
+                // 3. 초기화 실행 (취소 토큰과 함께)
+                await initManager.InitializeAllAsync(destroyCancellationToken);
+
+                // 4. 초기화 완료 후 작업
+                if (initManager.IsInitialized)
+                {
+                    Debug.Log("초기화 완료! 게임 시작 가능");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.LogWarning("초기화가 취소되었습니다.");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"초기화 중 오류 발생: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 커스텀 관찰자 예시
+    /// </summary>
+    public class CustomUniTaskInitializationObserver : MonoBehaviour, IInitializationObserver
+    {
+        public void OnInitializationStepStarted(InitializationStep step) { }
+        public void OnInitializationStepCompleted(InitializationStep step) { }
+        public void OnInitializationStepFailed(InitializationStep step, Exception error) { }
+        public void OnAllInitializationCompleted(TimeSpan totalDuration)
+        {
+            Debug.Log($"커스텀 관찰자: 모든 초기화 완료! (총 {totalDuration.TotalSeconds:F2}초)");
+        }
+        public void OnInitializationProgressUpdated(float progress) { }
+        public void OnInitializationCancelled()
+        {
+            Debug.Log("커스텀 관찰자: 초기화가 취소됨");
+        }
+    }
+
+    /// <summary>
+    /// 커스텀 초기화 객체 예시
+    /// </summary>
+    public class CustomUniTaskInitializer : MonoBehaviour, IInitializableAsync
+    {
+        public string Name => "Custom Initializer";
+        public InitializationPriority Priority => InitializationPriority.Low;
+        public bool IsInitialized { get; private set; }
+
+        public async UniTask InitializeAsync(CancellationToken cancellationToken = default)
+        {
+            Debug.Log("커스텀 초기화 시작");
+
+            try
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(1f).Milliseconds);
+                IsInitialized = true;
+                Debug.Log("커스텀 초기화 완료");
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.LogWarning("커스텀 초기화가 취소됨");
+                throw;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 성능 모니터링을 위한 초기화 관찰자
+    /// </summary>
+    public class PerformanceMonitoringObserver : MonoBehaviour, IInitializationObserver
+    {
+        private System.Diagnostics.Stopwatch _totalStopwatch = new System.Diagnostics.Stopwatch();
+        private System.Collections.Generic.Dictionary<string, TimeSpan> _stepDurations = new System.Collections.Generic.Dictionary<string, TimeSpan>();
+
+        private void Start()
+        {
+            UniTaskInitializationManager.Instance.RegisterObserver(this);
+            _totalStopwatch.Start();
+        }
+
+        public void OnInitializationStepStarted(InitializationStep step)
+        {
+            Debug.Log($"[Performance] {step.StepName} 시작");
+        }
+
+        public void OnInitializationStepCompleted(InitializationStep step)
+        {
+            _stepDurations[step.StepName] = step.Duration;
+            Debug.Log($"[Performance] {step.StepName} 완료: {step.Duration.TotalMilliseconds:F0}ms");
+        }
+
+        public void OnInitializationStepFailed(InitializationStep step, Exception error) { }
+
+        public void OnAllInitializationCompleted(TimeSpan totalDuration)
+        {
+            _totalStopwatch.Stop();
+
+            Debug.Log($"[Performance] 전체 초기화 완료: {totalDuration.TotalSeconds:F2}초");
+            Debug.Log($"[Performance] 실제 측정 시간: {_totalStopwatch.Elapsed.TotalSeconds:F2}초");
+
+            // 가장 오래 걸린 단계 찾기
+            if (_stepDurations.Count > 0)
+            {
+                var slowestStep = _stepDurations.OrderByDescending(kvp => kvp.Value).First();
+                Debug.Log($"[Performance] 가장 오래 걸린 단계: {slowestStep.Key} ({slowestStep.Value.TotalSeconds:F2}초)");
+            }
+        }
+
+        public void OnInitializationProgressUpdated(float progress) { }
+        public void OnInitializationCancelled() { }
+
+        private void OnDestroy()
+        {
+            if (UniTaskInitializationManager.Instance != null)
+            {
+                UniTaskInitializationManager.Instance.UnregisterObserver(this);
+            }
+        }
+    }
+}
