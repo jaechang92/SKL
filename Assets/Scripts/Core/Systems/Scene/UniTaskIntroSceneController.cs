@@ -9,6 +9,7 @@ using Metamorph.Initialization;
 using CustomDebug;
 using Metamorph.Core.Interfaces;
 using Metamorph.Managers;
+using TMPro;
 
 namespace Metamorph.UI
 {
@@ -19,11 +20,11 @@ namespace Metamorph.UI
     public class UniTaskIntroSceneController : MonoBehaviour, IInitializationObserver
     {
         [Header("UI References")]
-        [SerializeField] private GameObject _anyKeyText;
+
         [SerializeField] private GameObject _loadingPanel;
         [SerializeField] private Slider _loadingProgressBar;
-        [SerializeField] private Text _loadingStatusText;
-        [SerializeField] private Text _currentStepText;
+        [SerializeField] private TMP_Text _loadingStatusText;
+        [SerializeField] private TMP_Text _currentStepText;
         [SerializeField] private Button _cancelButton;
 
         [Header("Scene Configuration")]
@@ -136,8 +137,8 @@ namespace Metamorph.UI
         /// </summary>
         private void SetupInitialUI()
         {
-            _loadingPanel?.SetActive(true);
-            _anyKeyText?.SetActive(false);
+            _loadingPanel?.SetActive(false);
+            _currentStepText.gameObject?.SetActive(false);
 
             if (_loadingProgressBar != null)
             {
@@ -190,13 +191,13 @@ namespace Metamorph.UI
             }
             catch (OperationCanceledException)
             {
-                JCDebug.Log("[UniTaskIntroController] 초기화 프로세스가 취소되었습니다.",JCDebug.LogLevel.Warning);
+                JCDebug.Log("[UniTaskIntroController] 초기화 프로세스가 취소되었습니다.", JCDebug.LogLevel.Warning);
                 UpdateStatusText("초기화가 취소되었습니다.");
                 UpdateCurrentStepText("게임을 다시 시작해주세요.");
             }
             catch (Exception ex)
             {
-                JCDebug.Log($"[UniTaskIntroController] 초기화 프로세스 실패: {ex.Message}",JCDebug.LogLevel.Error);
+                JCDebug.Log($"[UniTaskIntroController] 초기화 프로세스 실패: {ex.Message}", JCDebug.LogLevel.Error);
                 UpdateStatusText("초기화 중 오류가 발생했습니다.");
                 UpdateCurrentStepText($"오류: {ex.Message}");
 
@@ -272,7 +273,7 @@ namespace Metamorph.UI
         private async UniTaskVoid TransitionToGameScene()
         {
             _canProceedToGame = false;
-            _anyKeyText?.SetActive(false);
+            _currentStepText.gameObject?.SetActive(false);
             _loadingPanel?.SetActive(true);
 
             UpdateStatusText("게임 씬으로 이동 중...");
@@ -296,7 +297,7 @@ namespace Metamorph.UI
             }
             catch (Exception ex)
             {
-                JCDebug.Log($"[UniTaskIntroController] 씬 전환 실패: {ex.Message}",JCDebug.LogLevel.Error);
+                JCDebug.Log($"[UniTaskIntroController] 씬 전환 실패: {ex.Message}", JCDebug.LogLevel.Error);
                 UpdateStatusText("씬 전환 중 오류가 발생했습니다.");
                 UpdateCurrentStepText($"오류: {ex.Message}");
             }
@@ -344,12 +345,14 @@ namespace Metamorph.UI
         /// <summary>
         /// 상태 텍스트 업데이트
         /// </summary>
-        private void UpdateStatusText(string message)
+        private void UpdateStatusText(string message, Func<UniTask> onComplete = null)
         {
             if (_loadingStatusText != null)
             {
                 _loadingStatusText.text = message;
             }
+
+            onComplete().Forget();
         }
 
         /// <summary>
@@ -408,12 +411,26 @@ namespace Metamorph.UI
         {
             _isInitializationCompleted = true;
 
-            UpdateStatusText("초기화 완료!");
+            UpdateStatusText("초기화 완료!", async () =>
+            {
+                await UniTask.Delay(
+                    TimeSpan.FromSeconds(0.5f).Milliseconds,
+                    cancellationToken: destroyCancellationToken  // 명시적 토큰 전달
+                );
+
+                UpdateStatusText("");
+            });
             UpdateCurrentStepText("아무 키나 눌러서 게임 시작");
             UpdatePerformanceMetrics(totalDuration);
 
             _loadingPanel?.SetActive(false);
-            _anyKeyText?.SetActive(true);
+            _currentStepText.gameObject?.SetActive(true);
+
+            CustomTween ct = _currentStepText.GetComponent<CustomTween>();
+            if (ct != null)
+            {
+                ct.PlayTween();
+            }
 
             if (_cancelButton != null)
             {

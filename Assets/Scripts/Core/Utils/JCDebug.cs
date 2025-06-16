@@ -187,8 +187,8 @@ namespace CustomDebug
                 formatted += message;
             }
 
-            // 스택 트레이스 추가 (에러인 경우)
-            if (_enableStackTrace && level == LogLevel.Error)
+            // 스택 트레이스 추가
+            if (_enableStackTrace)
             {
                 var stackTrace = new StackTrace(2, true);
                 var frame = stackTrace.GetFrame(0);

@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using Metamorph.Core.Interfaces;
 using System.Linq;
 using Metamorph.Initialization;
+using CustomDebug;
 
 namespace Metamorph.Initialization
 {
@@ -48,15 +49,15 @@ namespace Metamorph.Initialization
             try
             {
                 await initManager.InitializeAllAsync(destroyCancellationToken);
-                Debug.Log("[Bootstrap] 초기화 시스템 설정 완료");
+                JCDebug.Log("[Bootstrap] 초기화 시스템 설정 완료");
             }
             catch (OperationCanceledException)
             {
-                Debug.LogWarning("[Bootstrap] 초기화 시스템 설정이 취소됨");
+                JCDebug.Log("[Bootstrap] 초기화 시스템 설정이 취소됨", JCDebug.LogLevel.Warning);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Bootstrap] 초기화 시스템 설정 실패: {ex.Message}");
+                JCDebug.Log($"[Bootstrap] 초기화 시스템 설정 실패: {ex.Message}",JCDebug.LogLevel.Error);
             }
         }
 
@@ -83,32 +84,32 @@ namespace Metamorph.Initialization
 
         public void OnInitializationStepStarted(InitializationStep step)
         {
-            Debug.Log($"[DEBUG] 초기화 시작: {step.StepName}");
+            JCDebug.Log($"[DEBUG] 초기화 시작: {step.StepName}");
         }
 
         public void OnInitializationStepCompleted(InitializationStep step)
         {
-            Debug.Log($"[DEBUG] 초기화 완료: {step.StepName} (소요시간: {step.Duration.TotalSeconds:F2}초)");
+            JCDebug.Log($"[DEBUG] 초기화 완료: {step.StepName} (소요시간: {step.Duration.TotalSeconds:F2}초)");
         }
 
         public void OnInitializationStepFailed(InitializationStep step, Exception error)
         {
-            Debug.LogError($"[DEBUG] 초기화 실패: {step.StepName} - {error.Message}");
+            JCDebug.Log($"[DEBUG] 초기화 실패: {step.StepName} - {error.Message}",JCDebug.LogLevel.Error);
         }
 
         public void OnAllInitializationCompleted(TimeSpan totalDuration)
         {
-            Debug.Log($"[DEBUG] 모든 초기화 완료! 총 소요시간: {totalDuration.TotalSeconds:F2}초");
+            JCDebug.Log($"[DEBUG] 모든 초기화 완료! 총 소요시간: {totalDuration.TotalSeconds:F2}초");
         }
 
         public void OnInitializationProgressUpdated(float progress)
         {
-            Debug.Log($"[DEBUG] 초기화 진행률: {progress * 100:F1}%");
+            JCDebug.Log($"[DEBUG] 초기화 진행률: {progress * 100:F1}%");
         }
 
         public void OnInitializationCancelled()
         {
-            Debug.LogWarning("[DEBUG] 초기화가 취소되었습니다!");
+            JCDebug.Log("[DEBUG] 초기화가 취소되었습니다!",JCDebug.LogLevel.Warning);
         }
 
         private void OnDestroy()
@@ -155,16 +156,16 @@ namespace Metamorph.UI
                 // 4. 초기화 완료 후 작업
                 if (initManager.IsInitialized)
                 {
-                    Debug.Log("초기화 완료! 게임 시작 가능");
+                    JCDebug.Log("초기화 완료! 게임 시작 가능");
                 }
             }
             catch (OperationCanceledException)
             {
-                Debug.LogWarning("초기화가 취소되었습니다.");
+                JCDebug.Log("초기화가 취소되었습니다.",JCDebug.LogLevel.Warning);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"초기화 중 오류 발생: {ex.Message}");
+                JCDebug.Log($"초기화 중 오류 발생: {ex.Message}", JCDebug.LogLevel.Error);
             }
         }
     }
@@ -179,12 +180,12 @@ namespace Metamorph.UI
         public void OnInitializationStepFailed(InitializationStep step, Exception error) { }
         public void OnAllInitializationCompleted(TimeSpan totalDuration)
         {
-            Debug.Log($"커스텀 관찰자: 모든 초기화 완료! (총 {totalDuration.TotalSeconds:F2}초)");
+            JCDebug.Log($"커스텀 관찰자: 모든 초기화 완료! (총 {totalDuration.TotalSeconds:F2}초)");
         }
         public void OnInitializationProgressUpdated(float progress) { }
         public void OnInitializationCancelled()
         {
-            Debug.Log("커스텀 관찰자: 초기화가 취소됨");
+            JCDebug.Log("커스텀 관찰자: 초기화가 취소됨");
         }
     }
 
@@ -199,17 +200,17 @@ namespace Metamorph.UI
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken = default)
         {
-            Debug.Log("커스텀 초기화 시작");
+            JCDebug.Log("커스텀 초기화 시작");
 
             try
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(1f).Milliseconds);
                 IsInitialized = true;
-                Debug.Log("커스텀 초기화 완료");
+                JCDebug.Log("커스텀 초기화 완료");
             }
             catch (OperationCanceledException)
             {
-                Debug.LogWarning("커스텀 초기화가 취소됨");
+                JCDebug.Log("커스텀 초기화가 취소됨", JCDebug.LogLevel.Warning);
                 throw;
             }
         }
@@ -231,13 +232,13 @@ namespace Metamorph.UI
 
         public void OnInitializationStepStarted(InitializationStep step)
         {
-            Debug.Log($"[Performance] {step.StepName} 시작");
+            JCDebug.Log($"[Performance] {step.StepName} 시작");
         }
 
         public void OnInitializationStepCompleted(InitializationStep step)
         {
             _stepDurations[step.StepName] = step.Duration;
-            Debug.Log($"[Performance] {step.StepName} 완료: {step.Duration.TotalMilliseconds:F0}ms");
+            JCDebug.Log($"[Performance] {step.StepName} 완료: {step.Duration.TotalMilliseconds:F0}ms");
         }
 
         public void OnInitializationStepFailed(InitializationStep step, Exception error) { }
@@ -246,14 +247,14 @@ namespace Metamorph.UI
         {
             _totalStopwatch.Stop();
 
-            Debug.Log($"[Performance] 전체 초기화 완료: {totalDuration.TotalSeconds:F2}초");
-            Debug.Log($"[Performance] 실제 측정 시간: {_totalStopwatch.Elapsed.TotalSeconds:F2}초");
+            JCDebug.Log($"[Performance] 전체 초기화 완료: {totalDuration.TotalSeconds:F2}초");
+            JCDebug.Log($"[Performance] 실제 측정 시간: {_totalStopwatch.Elapsed.TotalSeconds:F2}초");
 
             // 가장 오래 걸린 단계 찾기
             if (_stepDurations.Count > 0)
             {
                 var slowestStep = _stepDurations.OrderByDescending(kvp => kvp.Value).First();
-                Debug.Log($"[Performance] 가장 오래 걸린 단계: {slowestStep.Key} ({slowestStep.Value.TotalSeconds:F2}초)");
+                JCDebug.Log($"[Performance] 가장 오래 걸린 단계: {slowestStep.Key} ({slowestStep.Value.TotalSeconds:F2}초)");
             }
         }
 
