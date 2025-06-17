@@ -21,7 +21,7 @@ namespace Metamorph.Managers
         private Dictionary<string, FormData> _unlockedForms = new Dictionary<string, FormData>();
 
         // 형태 변경 이벤트 - 옵저버 패턴
-        public static event Action<FormData> OnFormChanged = new Action<FormData>(delegate { });
+        public event Action<FormData> OnFormChanged;
 
         // 플레이어 컴포넌트 참조
         private PlayerController _playerController;

@@ -100,10 +100,10 @@ namespace Metamorph.Player.Components.Movement
 
         public bool IsGrounded => _isGrounded;
         public bool IsMoving => Mathf.Abs(_currentHorizontalSpeed) > 0.1f;
-        public bool IsFalling => _rb.velocity.y < -0.1f && !_isGrounded;
-        public bool IsRising => _rb.velocity.y > 0.1f;
+        public bool IsFalling => _rb.linearVelocity.y < -0.1f && !_isGrounded;
+        public bool IsRising => _rb.linearVelocity.y > 0.1f;
         public bool FacingRight => _facingRight;
-        public Vector2 Velocity => _rb.velocity;
+        public Vector2 Velocity => _rb.linearVelocity;
         public float HorizontalSpeed => _currentHorizontalSpeed;
 
         // 점프 관련 상태
@@ -254,9 +254,9 @@ namespace Metamorph.Player.Components.Movement
         /// </summary>
         public void CancelJump()
         {
-            if (_isJumping && _rb.velocity.y > 0)
+            if (_isJumping && _rb.linearVelocity.y > 0)
             {
-                _rb.velocity = new Vector2(_rb.velocity.x, _rb.velocity.y * _jumpCutMultiplier);
+                _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, _rb.linearVelocity.y * _jumpCutMultiplier);
             }
         }
 
@@ -266,7 +266,7 @@ namespace Metamorph.Player.Components.Movement
         public void Stop()
         {
             _moveInput = Vector2.zero;
-            _rb.velocity = new Vector2(0, _rb.velocity.y);
+            _rb.linearVelocity = new Vector2(0, _rb.linearVelocity.y);
             _currentHorizontalSpeed = 0;
         }
 
@@ -389,7 +389,7 @@ namespace Metamorph.Player.Components.Movement
         {
             float jumpForce = _playerStats?.JumpForce ?? 10f;
 
-            _rb.velocity = new Vector2(_rb.velocity.x, jumpForce);
+            _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, jumpForce);
             _isJumping = true;
             _jumpBufferTimer = 0;
 
@@ -404,7 +404,7 @@ namespace Metamorph.Player.Components.Movement
         {
             float jumpForce = (_playerStats?.JumpForce ?? 10f) * 0.8f; // 더블점프는 80% 힘
 
-            _rb.velocity = new Vector2(_rb.velocity.x, jumpForce);
+            _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, jumpForce);
             _hasDoubleJump = false;
             _jumpBufferTimer = 0;
 
@@ -442,18 +442,18 @@ namespace Metamorph.Player.Components.Movement
                 );
             }
 
-            _rb.velocity = new Vector2(_currentHorizontalSpeed, _rb.velocity.y);
+            _rb.linearVelocity = new Vector2(_currentHorizontalSpeed, _rb.linearVelocity.y);
 
             // 이동 이벤트 발생
-            OnMovementChanged?.Invoke(_rb.velocity);
+            OnMovementChanged?.Invoke(_rb.linearVelocity);
         }
 
         private void ApplyVerticalConstraints()
         {
             // 최대 낙하 속도 제한
-            if (_rb.velocity.y < _maxFallSpeed)
+            if (_rb.linearVelocity.y < _maxFallSpeed)
             {
-                _rb.velocity = new Vector2(_rb.velocity.x, _maxFallSpeed);
+                _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, _maxFallSpeed);
             }
         }
 
@@ -564,7 +564,7 @@ namespace Metamorph.Player.Components.Movement
             float currentDashSpeed = _dashSpeed * curveValue;
 
             // 대시 속도 적용
-            _rb.velocity = _dashDirection * currentDashSpeed;
+            _rb.linearVelocity = _dashDirection * currentDashSpeed;
         }
 
         /// <summary>
@@ -579,7 +579,7 @@ namespace Metamorph.Player.Components.Movement
 
             // 대시 후 속도 조절 (급정지 방지)
             float remainingSpeed = _currentHorizontalSpeed * 0.5f; // 50% 속도 유지
-            _rb.velocity = new Vector2(remainingSpeed, _rb.velocity.y);
+            _rb.linearVelocity = new Vector2(remainingSpeed, _rb.linearVelocity.y);
 
             // 무적 해제
             if (_dashInvulnerabilityTime > 0)
@@ -690,7 +690,7 @@ namespace Metamorph.Player.Components.Movement
                 JCDebug.Log($"[PlayerMovement] " +
                          $"Grounded: {_isGrounded}, " +
                          $"Speed: {_currentHorizontalSpeed:F2}, " +
-                         $"Velocity: {_rb.velocity}, " +
+                         $"Velocity: {_rb.linearVelocity}, " +
                          $"CanJump: {CanJump}, " +
                          $"CanDoubleJump: {CanDoubleJump}", JCDebug.LogLevel.Info, _HideDebugInfo);
             }
@@ -738,7 +738,7 @@ namespace Metamorph.Player.Components.Movement
         {
             JCDebug.Log($"=== Player Movement Status ===\n" +
                      $"Grounded: {_isGrounded}\n" +
-                     $"Velocity: {_rb?.velocity}\n" +
+                     $"Velocity: {_rb?.linearVelocity}\n" +
                      $"Horizontal Speed: {_currentHorizontalSpeed:F2}\n" +
                      $"Facing Right: {_facingRight}\n" +
                      $"Can Jump: {CanJump}\n" +

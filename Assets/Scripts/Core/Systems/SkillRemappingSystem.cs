@@ -159,7 +159,7 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
     {
         if (FormManager.Instance != null)
         {
-            FormManager.OnFormChanged += OnFormChanged;
+            FormManager.Instance.RegisterPlayer(OnFormChanged);
         }
         else
         {
