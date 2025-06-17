@@ -1,4 +1,4 @@
-// Assets/Scripts/Level/Room/Components/RoomEntrance.cs ����
+// Assets/Scripts/Level/Room/Components/RoomEntrance.cs 수정
 using UnityEngine;
 using System.Collections;
 using CustomDebug;
@@ -30,14 +30,14 @@ public class RoomEntrance : MonoBehaviour
     [SerializeField] private bool _showDebugInfo = false;
     [SerializeField] private bool _drawGizmos = true;
 
-    // ���� ����
+    // 상태 관리
     private bool _hasBeenUsed = false;
     private bool _isPlayerInside = false;
     private Collider2D _triggerCollider;
     private Room _parentRoom;
     private Coroutine _activationCoroutine;
 
-    // �̺�Ʈ
+    // 이벤트
     public System.Action OnPlayerEntered;
     public System.Action OnPlayerExited;
     public System.Action OnEntranceActivated;
@@ -80,27 +80,27 @@ public class RoomEntrance : MonoBehaviour
 
         if (_triggerCollider == null)
         {
-            JCDebug.Log("[RoomEntrance] Collider2D ������Ʈ�� �ʿ��մϴ�!", JCDebug.LogLevel.Error);
+            JCDebug.Log("[RoomEntrance] Collider2D 컴포넌트가 필요합니다!", JCDebug.LogLevel.Error);
         }
 
         if (_parentRoom == null && _showDebugInfo)
         {
-            JCDebug.Log("[RoomEntrance] �θ� Room�� ã�� �� �����ϴ�.", JCDebug.LogLevel.Warning);
+            JCDebug.Log("[RoomEntrance] 부모 Room을 찾을 수 없습니다.", JCDebug.LogLevel.Warning);
         }
     }
 
     private void SetupEntrance()
     {
-        // �Ա� ���⿡ ���� �ڵ� ��ġ ����
+        // 입구 방향에 따른 자동 위치 조정
         if (_entranceDirection != RoomDirection.Any && _parentRoom != null)
         {
             PositionEntranceByDirection();
         }
 
-        // �ð��� ��� ����
+        // 시각적 요소 설정
         SetupVisualElements();
 
-        JCDebug.Log($"[RoomEntrance] �Ա� ���� �Ϸ�: {_entranceDirection}", JCDebug.LogLevel.Info, !_showDebugInfo);
+        JCDebug.Log($"[RoomEntrance] 입구 설정 완료: {_entranceDirection}", JCDebug.LogLevel.Info, !_showDebugInfo);
     }
 
     private void PositionEntranceByDirection()
@@ -131,19 +131,19 @@ public class RoomEntrance : MonoBehaviour
 
     private void SetupVisualElements()
     {
-        // ��� ���� �ð� ���
+        // 잠긴 상태 시각 요소
         if (_lockedVisual != null)
         {
             _lockedVisual.SetActive(_requiresKey);
         }
 
-        // Ȱ�� ���� �ð� ���
+        // 활성 상태 시각 요소
         if (_activeVisual != null)
         {
             _activeVisual.SetActive(_isActive);
         }
 
-        // ���� ����
+        // 색상 적용
         var spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer != null)
         {
@@ -155,23 +155,23 @@ public class RoomEntrance : MonoBehaviour
     {
         if (!other.CompareTag("Player")) return;
 
-        JCDebug.Log($"[RoomEntrance] �÷��̾� ����: {gameObject.name}", JCDebug.LogLevel.Info, !_showDebugInfo);
+        JCDebug.Log($"[RoomEntrance] 플레이어 감지: {gameObject.name}", JCDebug.LogLevel.Info, !_showDebugInfo);
 
-        // ���� üũ
+        // 방향 체크
         if (_checkPlayerDirection && !IsValidPlayerDirection(other.transform))
         {
-            JCDebug.Log("[RoomEntrance] �߸��� ���� ����", JCDebug.LogLevel.Info, !_showDebugInfo);
+            JCDebug.Log("[RoomEntrance] 잘못된 입장 방향", JCDebug.LogLevel.Info, !_showDebugInfo);
             return;
         }
 
-        // ���� ���� üũ
+        // 접근 권한 체크
         if (!CanPlayerEnter(other.gameObject))
         {
             HandleAccessDenied();
             return;
         }
 
-        // ���� ó��
+        // 입장 처리
         HandlePlayerEntered(other.gameObject);
     }
 
@@ -186,16 +186,16 @@ public class RoomEntrance : MonoBehaviour
     {
         if (_entranceDirection == RoomDirection.Any) return true;
 
-        // �÷��̾��� �̵� ���� Ȯ��
+        // 플레이어의 이동 방향 확인
         var playerMovement = playerTransform.GetComponent<Rigidbody2D>();
         if (playerMovement == null) return true;
 
         Vector2 playerVelocity = playerMovement.linearVelocity.normalized;
         Vector2 entranceDirection = GetDirectionVector(_entranceDirection);
 
-        // �Ա� ����� �÷��̾� �̵� ������ �ݴ����� Ȯ��
+        // 입구 방향과 플레이어 이동 방향이 반대인지 확인
         float dot = Vector2.Dot(playerVelocity, -entranceDirection);
-        return dot > 0.5f; // �ڻ��� 60�� �̻�
+        return dot > 0.5f; // 코사인 60도 이상
     }
 
     private Vector2 GetDirectionVector(RoomDirection direction)
@@ -212,19 +212,19 @@ public class RoomEntrance : MonoBehaviour
 
     private bool CanPlayerEnter(GameObject player)
     {
-        // Ȱ�� ���� üũ
+        // 활성 상태 체크
         if (!IsActive)
         {
-            JCDebug.Log("[RoomEntrance] ��Ȱ�� ������ �Ա�", JCDebug.LogLevel.Info, !_showDebugInfo);
+            JCDebug.Log("[RoomEntrance] 비활성 상태의 입구", JCDebug.LogLevel.Info, !_showDebugInfo);
             return false;
         }
 
-        // Ű �䱸���� üũ
+        // 키 요구사항 체크
         if (_requiresKey)
         {
             if (!PlayerHasRequiredKey(player))
             {
-                JCDebug.Log($"[RoomEntrance] �ʿ��� Ű�� ����: {_requiredKeyId}", JCDebug.LogLevel.Info, !_showDebugInfo);
+                JCDebug.Log($"[RoomEntrance] 필요한 키가 없음: {_requiredKeyId}", JCDebug.LogLevel.Info, !_showDebugInfo);
                 return false;
             }
         }
@@ -234,12 +234,12 @@ public class RoomEntrance : MonoBehaviour
 
     private bool PlayerHasRequiredKey(GameObject player)
     {
-        // �÷��̾��� �κ��丮���� Ű Ȯ��
-        // ���� ���������� InventoryManager�� PlayerInventory ������Ʈ ���
+        // 플레이어의 인벤토리에서 키 확인
+        // 실제 구현에서는 InventoryManager나 PlayerInventory 컴포넌트 사용
 
         if (string.IsNullOrEmpty(_requiredKeyId)) return true;
 
-        // �ӽ� ����: PlayerPrefs ���
+        // 임시 구현: PlayerPrefs 사용
         return PlayerPrefs.GetInt($"HasKey_{_requiredKeyId}", 0) == 1;
     }
 
@@ -249,7 +249,7 @@ public class RoomEntrance : MonoBehaviour
 
         _isPlayerInside = true;
 
-        // Ȱ��ȭ ������ ����
+        // 활성화 딜레이 적용
         if (_activationCoroutine != null)
         {
             StopCoroutine(_activationCoroutine);
@@ -260,36 +260,36 @@ public class RoomEntrance : MonoBehaviour
 
     private IEnumerator ActivateEntranceCoroutine(GameObject player)
     {
-        // Ȱ��ȭ ������
+        // 활성화 딜레이
         if (_activationDelay > 0)
         {
             yield return new WaitForSeconds(_activationDelay);
         }
 
-        // �÷��̾ ���� �Ա� �ȿ� �ִ��� Ȯ��
+        // 플레이어가 아직 입구 안에 있는지 확인
         if (!_isPlayerInside) yield break;
 
-        // ���� ȿ�� ���
+        // 입장 효과 재생
         PlayEntranceEffects();
 
-        // Ű �Ҹ� (��ȸ�� Ű�� ���)
+        // 키 소모 (일회용 키인 경우)
         if (_requiresKey && _oneTimeUse)
         {
             ConsumeKey(player);
         }
 
-        // ��� Ƚ�� ������Ʈ
+        // 사용 횟수 업데이트
         if (_oneTimeUse)
         {
             _hasBeenUsed = true;
             UpdateVisuals();
         }
 
-        // �̺�Ʈ �߻�
+        // 이벤트 발생
         OnPlayerEntered?.Invoke();
         OnEntranceActivated?.Invoke();
 
-        JCDebug.Log($"[RoomEntrance] �÷��̾� ���� �Ϸ�: {gameObject.name}", JCDebug.LogLevel.Info, !_showDebugInfo);
+        JCDebug.Log($"[RoomEntrance] 플레이어 입장 완료: {gameObject.name}", JCDebug.LogLevel.Info, !_showDebugInfo);
     }
 
     private void HandlePlayerExited(GameObject player)
@@ -298,40 +298,40 @@ public class RoomEntrance : MonoBehaviour
 
         _isPlayerInside = false;
 
-        // Ȱ��ȭ �ڷ�ƾ �ߴ�
+        // 활성화 코루틴 중단
         if (_activationCoroutine != null)
         {
             StopCoroutine(_activationCoroutine);
             _activationCoroutine = null;
         }
 
-        // �̺�Ʈ �߻�
+        // 이벤트 발생
         OnPlayerExited?.Invoke();
 
-        JCDebug.Log($"[RoomEntrance] �÷��̾� ����: {gameObject.name}", JCDebug.LogLevel.Info, !_showDebugInfo);
+        JCDebug.Log($"[RoomEntrance] 플레이어 퇴장: {gameObject.name}", JCDebug.LogLevel.Info, !_showDebugInfo);
     }
 
     private void HandleAccessDenied()
     {
-        // ���� �ź� ȿ��
+        // 접근 거부 효과
         PlayAccessDeniedEffects();
 
-        // �̺�Ʈ �߻�
+        // 이벤트 발생
         OnAccessDenied?.Invoke();
 
-        JCDebug.Log("[RoomEntrance] ���� �ź�", JCDebug.LogLevel.Info, !_showDebugInfo);
+        JCDebug.Log("[RoomEntrance] 접근 거부", JCDebug.LogLevel.Info, !_showDebugInfo);
     }
 
     private void PlayEntranceEffects()
     {
-        // Ȱ��ȭ ����Ʈ
+        // 활성화 이펙트
         if (_activationEffect != null)
         {
             GameObject effect = Instantiate(_activationEffect, transform.position, transform.rotation);
             Destroy(effect, 2f);
         }
 
-        // ���� ����
+        // 입장 사운드
         if (_enterSound != null)
         {
             AudioSource.PlayClipAtPoint(_enterSound, transform.position);
@@ -340,10 +340,10 @@ public class RoomEntrance : MonoBehaviour
 
     private void PlayAccessDeniedEffects()
     {
-        // ���� �ź� �ð� ȿ�� (������ ������ ��)
+        // 접근 거부 시각 효과 (빨간색 깜빡임 등)
         StartCoroutine(FlashEffect(Color.red, 0.5f));
 
-        // ���� �ź� ���� (�ִٸ�)
+        // 접근 거부 사운드 (있다면)
         // AudioSource.PlayClipAtPoint(deniedSound, transform.position);
     }
 
@@ -368,17 +368,17 @@ public class RoomEntrance : MonoBehaviour
 
     private void ConsumeKey(GameObject player)
     {
-        // Ű �Ҹ� ����
+        // 키 소모 로직
         if (!string.IsNullOrEmpty(_requiredKeyId))
         {
             PlayerPrefs.SetInt($"HasKey_{_requiredKeyId}", 0);
-            JCDebug.Log($"[RoomEntrance] Ű �Ҹ�: {_requiredKeyId}", JCDebug.LogLevel.Info, !_showDebugInfo);
+            JCDebug.Log($"[RoomEntrance] 키 소모: {_requiredKeyId}", JCDebug.LogLevel.Info, !_showDebugInfo);
         }
     }
 
     private void UpdateVisuals()
     {
-        // Ȱ�� ���¿� ���� �ð� ������Ʈ
+        // 활성 상태에 따른 시각 업데이트
         if (_activeVisual != null)
         {
             _activeVisual.SetActive(IsActive);
@@ -389,7 +389,7 @@ public class RoomEntrance : MonoBehaviour
             _lockedVisual.SetActive(_requiresKey && !_hasBeenUsed);
         }
 
-        // ������ ����
+        // 투명도 조절
         var spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer != null)
         {
@@ -402,7 +402,7 @@ public class RoomEntrance : MonoBehaviour
     #region Public Methods
 
     /// <summary>
-    /// �Ա� Ȱ��ȭ/��Ȱ��ȭ
+    /// 입구 활성화/비활성화
     /// </summary>
     public void SetActive(bool active)
     {
@@ -418,11 +418,11 @@ public class RoomEntrance : MonoBehaviour
             OnEntranceDeactivated?.Invoke();
         }
 
-        JCDebug.Log($"[RoomEntrance] �Ա� ���� ����: {(active ? "Ȱ��ȭ" : "��Ȱ��ȭ")}", JCDebug.LogLevel.Info, !_showDebugInfo);
+        JCDebug.Log($"[RoomEntrance] 입구 상태 변경: {(active ? "활성화" : "비활성화")}", JCDebug.LogLevel.Info, !_showDebugInfo);
     }
 
     /// <summary>
-    /// Ű �䱸���� ����
+    /// 키 요구사항 설정
     /// </summary>
     public void SetKeyRequirement(bool requiresKey, string keyId = "")
     {
@@ -432,7 +432,7 @@ public class RoomEntrance : MonoBehaviour
     }
 
     /// <summary>
-    /// �Ա� ���� (��ȸ�� ��� ���� �ʱ�ȭ)
+    /// 입구 리셋 (일회용 사용 상태 초기화)
     /// </summary>
     public void ResetEntrance()
     {
@@ -449,7 +449,7 @@ public class RoomEntrance : MonoBehaviour
     {
         if (!_drawGizmos) return;
 
-        // �Ա� ���� ǥ��
+        // 입구 범위 표시
         Gizmos.color = IsActive ? _entranceColor : Color.gray;
 
         if (_triggerCollider != null)
@@ -461,7 +461,7 @@ public class RoomEntrance : MonoBehaviour
             Gizmos.DrawWireCube(transform.position, Vector3.one);
         }
 
-        // ���� ǥ��
+        // 방향 표시
         if (_entranceDirection != RoomDirection.Any)
         {
             Gizmos.color = Color.yellow;
@@ -472,7 +472,7 @@ public class RoomEntrance : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        // ���õ� ���¿��� �߰� ���� ǥ��
+        // 선택된 상태에서 추가 정보 표시
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, 0.5f);
     }

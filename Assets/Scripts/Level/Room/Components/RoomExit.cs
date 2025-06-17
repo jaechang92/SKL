@@ -1,4 +1,4 @@
-// Assets/Scripts/Level/Room/Components/RoomExit.cs ����
+// Assets/Scripts/Level/Room/Components/RoomExit.cs 수정
 using CustomDebug;
 using Cysharp.Threading.Tasks;
 using Metamorph.Managers;
@@ -19,9 +19,9 @@ public class RoomExit : MonoBehaviour
     [SerializeField] private bool _checkPlayerDirection = true;
 
     [Header("Destination")]
-    [SerializeField] private RoomExit _connectedExit; // ����� �ⱸ
-    [SerializeField] private Transform _teleportDestination; // �ڷ���Ʈ ������
-    [SerializeField] private string _targetSceneName = ""; // �� ��ȯ��
+    [SerializeField] private RoomExit _connectedExit; // 연결된 출구
+    [SerializeField] private Transform _teleportDestination; // 텔레포트 목적지
+    [SerializeField] private string _targetSceneName = ""; // 씬 전환용
 
     [Header("Effects")]
     [SerializeField] private GameObject _exitEffect;
@@ -39,14 +39,14 @@ public class RoomExit : MonoBehaviour
     [SerializeField] private bool _showDebugInfo = false;
     [SerializeField] private bool _drawGizmos = true;
 
-    // ���� ����
+    // 상태 관리
     private bool _isPlayerInside = false;
     private bool _isProcessingExit = false;
     private Collider2D _triggerCollider;
     private Room _parentRoom;
     private Coroutine _exitCoroutine;
 
-    // �̺�Ʈ
+    // 이벤트
     public System.Action OnPlayerExited;
     public System.Action OnExitActivated;
     public System.Action OnExitDeactivated;
@@ -55,11 +55,11 @@ public class RoomExit : MonoBehaviour
 
     public enum ExitType
     {
-        Normal,         // �Ϲ� �ⱸ
-        Teleporter,     // �ڷ�����
-        SceneTransition, // �� ��ȯ
-        OneWay,         // �Ϲ���
-        Secret          // ��� �ⱸ
+        Normal,         // 일반 출구
+        Teleporter,     // 텔레포터
+        SceneTransition, // 씬 전환
+        OneWay,         // 일방향
+        Secret          // 비밀 출구
     }
 
     public enum RoomDirection
@@ -98,33 +98,33 @@ public class RoomExit : MonoBehaviour
 
         if (_triggerCollider == null)
         {
-            JCDebug.Log("[RoomExit] Collider2D ������Ʈ�� �ʿ��մϴ�!", JCDebug.LogLevel.Error);
+            JCDebug.Log("[RoomExit] Collider2D 컴포넌트가 필요합니다!", JCDebug.LogLevel.Error);
         }
 
         if (_parentRoom == null && _showDebugInfo)
         {
-            JCDebug.Log("[RoomExit] �θ� Room�� ã�� �� �����ϴ�.", JCDebug.LogLevel.Warning);
+            JCDebug.Log("[RoomExit] 부모 Room을 찾을 수 없습니다.", JCDebug.LogLevel.Warning);
         }
     }
 
     private void SetupExit()
     {
-        // �ⱸ ���⿡ ���� �ڵ� ��ġ ����
+        // 출구 방향에 따른 자동 위치 조정
         if (_exitDirection != RoomDirection.Any && _parentRoom != null)
         {
             PositionExitByDirection();
         }
 
-        // �ð��� ��� ����
+        // 시각적 요소 설정
         SetupVisualElements();
 
-        // �� Ŭ���� �̺�Ʈ ����
+        // 방 클리어 이벤트 구독
         if (_parentRoom != null && _requiresRoomClear)
         {
             _parentRoom.OnRoomCleared += HandleRoomCleared;
         }
 
-        JCDebug.Log($"[RoomExit] �ⱸ ���� �Ϸ�: {_exitType} - {_exitDirection}", JCDebug.LogLevel.Info, !_showDebugInfo);
+        JCDebug.Log($"[RoomExit] 출구 설정 완료: {_exitType} - {_exitDirection}", JCDebug.LogLevel.Info, !_showDebugInfo);
     }
 
     private void PositionExitByDirection()
@@ -155,19 +155,19 @@ public class RoomExit : MonoBehaviour
 
     private void SetupVisualElements()
     {
-        // ��� ���� �ð� ���
+        // 잠긴 상태 시각 요소
         if (_lockedVisual != null)
         {
             _lockedVisual.SetActive(_isLocked);
         }
 
-        // Ȱ�� ���� �ð� ���
+        // 활성 상태 시각 요소
         if (_activeVisual != null)
         {
             _activeVisual.SetActive(_isActive);
         }
 
-        // ���� ����
+        // 색상 적용
         var spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer != null)
         {
@@ -179,25 +179,25 @@ public class RoomExit : MonoBehaviour
     {
         if (!other.CompareTag("Player") || _isProcessingExit) return;
 
-        JCDebug.Log($"[RoomExit] �÷��̾� ����: {gameObject.name}", JCDebug.LogLevel.Info, !_showDebugInfo);
+        JCDebug.Log($"[RoomExit] 플레이어 감지: {gameObject.name}", JCDebug.LogLevel.Info, !_showDebugInfo);
 
         _isPlayerInside = true;
 
-        // ���� üũ
+        // 방향 체크
         if (_checkPlayerDirection && !IsValidPlayerDirection(other.transform))
         {
-            JCDebug.Log("[RoomExit] �߸��� ���� ����", JCDebug.LogLevel.Info, !_showDebugInfo);
+            JCDebug.Log("[RoomExit] 잘못된 퇴장 방향", JCDebug.LogLevel.Info, !_showDebugInfo);
             return;
         }
 
-        // �ⱸ ��� ���� ���� üũ
+        // 출구 사용 가능 여부 체크
         if (!CanPlayerExit())
         {
             HandleExitBlocked();
             return;
         }
 
-        // ���� ó�� ����
+        // 퇴장 처리 시작
         HandlePlayerExit(other.gameObject);
     }
 
@@ -207,7 +207,7 @@ public class RoomExit : MonoBehaviour
 
         _isPlayerInside = false;
 
-        // ���� ó�� �ߴ�
+        // 퇴장 처리 중단
         if (_exitCoroutine != null)
         {
             StopCoroutine(_exitCoroutine);
@@ -220,16 +220,16 @@ public class RoomExit : MonoBehaviour
     {
         if (_exitDirection == RoomDirection.Any) return true;
 
-        // �÷��̾��� �̵� ���� Ȯ��
+        // 플레이어의 이동 방향 확인
         var playerMovement = playerTransform.GetComponent<Rigidbody2D>();
         if (playerMovement == null) return true;
 
         Vector2 playerVelocity = playerMovement.linearVelocity.normalized;
         Vector2 exitDirection = GetDirectionVector(_exitDirection);
 
-        // �ⱸ ����� �÷��̾� �̵� ������ ������ Ȯ��
+        // 출구 방향과 플레이어 이동 방향이 같은지 확인
         float dot = Vector2.Dot(playerVelocity, exitDirection);
-        return dot > 0.5f; // �ڻ��� 60�� �̻�
+        return dot > 0.5f; // 코사인 60도 이상
     }
 
     private Vector2 GetDirectionVector(RoomDirection direction)
@@ -246,17 +246,17 @@ public class RoomExit : MonoBehaviour
 
     private bool CanPlayerExit()
     {
-        // Ȱ�� ���� üũ
+        // 활성 상태 체크
         if (!IsActive)
         {
-            JCDebug.Log("[RoomExit] ��Ȱ�� ������ �ⱸ", JCDebug.LogLevel.Info, !_showDebugInfo);
+            JCDebug.Log("[RoomExit] 비활성 상태의 출구", JCDebug.LogLevel.Info, !_showDebugInfo);
             return false;
         }
 
-        // �� Ŭ���� �䱸���� üũ
+        // 방 클리어 요구사항 체크
         if (_requiresRoomClear && !IsRoomCleared())
         {
-            JCDebug.Log("[RoomExit] �� Ŭ��� �ʿ���", JCDebug.LogLevel.Info, !_showDebugInfo);
+            JCDebug.Log("[RoomExit] 방 클리어가 필요함", JCDebug.LogLevel.Info, !_showDebugInfo);
             return false;
         }
 
@@ -274,37 +274,37 @@ public class RoomExit : MonoBehaviour
 
         _isProcessingExit = true;
 
-        // ���� ������ ����
+        // 퇴장 딜레이 적용
         _exitCoroutine = StartCoroutine(ProcessExitCoroutine(player));
     }
 
     private IEnumerator ProcessExitCoroutine(GameObject player)
     {
-        // ���� ������
+        // 퇴장 딜레이
         if (_exitDelay > 0)
         {
             yield return new WaitForSeconds(_exitDelay);
         }
 
-        // �÷��̾ ���� �ⱸ �ȿ� �ִ��� Ȯ��
+        // 플레이어가 아직 출구 안에 있는지 확인
         if (!_isPlayerInside)
         {
             _isProcessingExit = false;
             yield break;
         }
 
-        // ���� ȿ�� ���
+        // 퇴장 효과 재생
         PlayExitEffects();
 
-        // ���� Ÿ�Կ� ���� ó��
+        // 퇴장 타입에 따른 처리
         yield return StartCoroutine(ProcessExitByType(player));
 
-        // �̺�Ʈ �߻�
+        // 이벤트 발생
         OnPlayerExited?.Invoke();
 
         _isProcessingExit = false;
 
-        JCDebug.Log($"[RoomExit] �÷��̾� ���� �Ϸ�: {_exitType}", JCDebug.LogLevel.Info, !_showDebugInfo);
+        JCDebug.Log($"[RoomExit] 플레이어 퇴장 완료: {_exitType}", JCDebug.LogLevel.Info, !_showDebugInfo);
     }
 
     private IEnumerator ProcessExitByType(GameObject player)
@@ -331,18 +331,18 @@ public class RoomExit : MonoBehaviour
 
     private IEnumerator ProcessNormalExit(GameObject player)
     {
-        // �Ϲ� �ⱸ: �ܼ��� �� ���� ó��
+        // 일반 출구: 단순히 방 퇴장 처리
         yield return null;
     }
 
     private IEnumerator ProcessTeleporterExit(GameObject player)
     {
-        // �ڷ�����: ������ ��ġ�� �̵�
+        // 텔레포터: 지정된 위치로 이동
         if (_teleportDestination != null)
         {
             if (_fadeOnExit)
             {
-                // ���̵� �ƿ�/�� ȿ��
+                // 페이드 아웃/인 효과
                 yield return StartCoroutine(FadeOut());
             }
 
@@ -373,7 +373,7 @@ public class RoomExit : MonoBehaviour
 
     private IEnumerator ProcessSceneTransitionExit(GameObject player)
     {
-        // �� ��ȯ
+        // 씬 전환
         if (!string.IsNullOrEmpty(_targetSceneName))
         {
             if (_fadeOnExit)
@@ -381,7 +381,7 @@ public class RoomExit : MonoBehaviour
                 yield return StartCoroutine(FadeOut());
             }
 
-            // �� ��ȯ �Ŵ����� ���� �� �ε�
+            // 씬 전환 매니저를 통한 씬 로드
             var sceneManager = FindAnyObjectByType<UniTaskSceneTransitionManager>();
             if (sceneManager != null)
             {
@@ -396,51 +396,51 @@ public class RoomExit : MonoBehaviour
 
     private IEnumerator ProcessOneWayExit(GameObject player)
     {
-        // �Ϲ��� �ⱸ: �ǵ��ƿ� �� ����
+        // 일방향 출구: 되돌아올 수 없음
         SetLocked(true);
         yield return ProcessNormalExit(player);
     }
 
     private IEnumerator ProcessSecretExit(GameObject player)
     {
-        // ��� �ⱸ: Ư�� ȿ���� �Բ�
+        // 비밀 출구: 특수 효과와 함께
         yield return ProcessTeleporterExit(player);
 
-        // ��� �ⱸ �߰� �̺�Ʈ �߻�
+        // 비밀 출구 발견 이벤트 발생
         // SecretDiscoveryManager.Instance?.OnSecretExitFound();
     }
 
     private void HandleExitBlocked()
     {
-        // �ⱸ ���� ȿ��
+        // 출구 차단 효과
         PlayBlockedEffects();
 
-        // �̺�Ʈ �߻�
+        // 이벤트 발생
         OnExitBlocked?.Invoke();
 
-        JCDebug.Log("[RoomExit] �ⱸ ���ܵ�", JCDebug.LogLevel.Info, !_showDebugInfo);
+        JCDebug.Log("[RoomExit] 출구 차단됨", JCDebug.LogLevel.Info, !_showDebugInfo);
     }
 
     private void HandleRoomCleared(Room room)
     {
-        // �� Ŭ���� �� �ⱸ ��� ����
+        // 방 클리어 시 출구 잠금 해제
         if (_requiresRoomClear)
         {
             SetLocked(false);
-            JCDebug.Log("[RoomExit] �� Ŭ����� �ⱸ ��� ����", JCDebug.LogLevel.Info, !_showDebugInfo);
+            JCDebug.Log("[RoomExit] 방 클리어로 출구 잠금 해제", JCDebug.LogLevel.Info, !_showDebugInfo);
         }
     }
 
     private void PlayExitEffects()
     {
-        // ���� ����Ʈ
+        // 퇴장 이펙트
         if (_exitEffect != null)
         {
             GameObject effect = Instantiate(_exitEffect, transform.position, transform.rotation);
             Destroy(effect, 3f);
         }
 
-        // ���� ����
+        // 퇴장 사운드
         if (_exitSound != null)
         {
             AudioSource.PlayClipAtPoint(_exitSound, transform.position);
@@ -449,7 +449,7 @@ public class RoomExit : MonoBehaviour
 
     private void PlayBlockedEffects()
     {
-        // ���� �ð� ȿ�� (������ ������ ��)
+        // 차단 시각 효과 (빨간색 깜빡임 등)
         StartCoroutine(FlashEffect(_lockedColor, 0.5f));
     }
 
@@ -474,19 +474,19 @@ public class RoomExit : MonoBehaviour
 
     private IEnumerator FadeOut()
     {
-        // ���̵� �ƿ� ȿ�� (���� ���������� UI �Ŵ��� ���)
+        // 페이드 아웃 효과 (실제 구현에서는 UI 매니저 사용)
         yield return new WaitForSeconds(0.5f);
     }
 
     private IEnumerator FadeIn()
     {
-        // ���̵� �� ȿ��
+        // 페이드 인 효과
         yield return new WaitForSeconds(0.5f);
     }
 
     private void UpdateVisuals()
     {
-        // Ȱ�� ���¿� ���� �ð� ������Ʈ
+        // 활성 상태에 따른 시각 업데이트
         if (_activeVisual != null)
         {
             _activeVisual.SetActive(IsActive);
@@ -497,7 +497,7 @@ public class RoomExit : MonoBehaviour
             _lockedVisual.SetActive(_isLocked || (_requiresRoomClear && !IsRoomCleared()));
         }
 
-        // ���� ������Ʈ
+        // 색상 업데이트
         var spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer != null)
         {
@@ -510,7 +510,7 @@ public class RoomExit : MonoBehaviour
     #region Public Methods
 
     /// <summary>
-    /// �ⱸ Ȱ��ȭ/��Ȱ��ȭ
+    /// 출구 활성화/비활성화
     /// </summary>
     public void SetActive(bool active)
     {
@@ -526,22 +526,22 @@ public class RoomExit : MonoBehaviour
             OnExitDeactivated?.Invoke();
         }
 
-        JCDebug.Log($"[RoomExit] �ⱸ ���� ����: {(active ? "Ȱ��ȭ" : "��Ȱ��ȭ")}", JCDebug.LogLevel.Info, !_showDebugInfo);
+        JCDebug.Log($"[RoomExit] 출구 상태 변경: {(active ? "활성화" : "비활성화")}", JCDebug.LogLevel.Info, !_showDebugInfo);
     }
 
     /// <summary>
-    /// �ⱸ ���/����
+    /// 출구 잠금/해제
     /// </summary>
     public void SetLocked(bool locked)
     {
         _isLocked = locked;
         UpdateVisuals();
 
-        JCDebug.Log($"[RoomExit] �ⱸ ��� ���� ����: {(locked ? "���" : "����")}", JCDebug.LogLevel.Info, !_showDebugInfo);
+        JCDebug.Log($"[RoomExit] 출구 잠금 상태 변경: {(locked ? "잠김" : "해제")}", JCDebug.LogLevel.Info, !_showDebugInfo);
     }
 
     /// <summary>
-    /// ����� �ⱸ ����
+    /// 연결된 출구 설정
     /// </summary>
     public void SetConnectedExit(RoomExit connectedExit)
     {
@@ -549,7 +549,7 @@ public class RoomExit : MonoBehaviour
     }
 
     /// <summary>
-    /// �ڷ���Ʈ ������ ����
+    /// 텔레포트 목적지 설정
     /// </summary>
     public void SetTeleportDestination(Transform destination)
     {
@@ -564,7 +564,7 @@ public class RoomExit : MonoBehaviour
     {
         if (!_drawGizmos) return;
 
-        // �ⱸ ���� ǥ��
+        // 출구 범위 표시
         Gizmos.color = IsActive ? _exitColor : _lockedColor;
 
         if (_triggerCollider != null)
@@ -576,7 +576,7 @@ public class RoomExit : MonoBehaviour
             Gizmos.DrawWireCube(transform.position, Vector3.one);
         }
 
-        // ���� ǥ��
+        // 방향 표시
         if (_exitDirection != RoomDirection.Any)
         {
             Gizmos.color = Color.cyan;
@@ -584,7 +584,7 @@ public class RoomExit : MonoBehaviour
             Gizmos.DrawRay(transform.position, directionVector * 2f);
         }
 
-        // ���� ǥ��
+        // 연결 표시
         if (_connectedExit != null)
         {
             Gizmos.color = Color.magenta;
@@ -613,7 +613,7 @@ public class RoomExit : MonoBehaviour
 
     private void OnDestroy()
     {
-        // �̺�Ʈ ���� ����
+        // 이벤트 구독 해제
         if (_parentRoom != null)
         {
             _parentRoom.OnRoomCleared -= HandleRoomCleared;
