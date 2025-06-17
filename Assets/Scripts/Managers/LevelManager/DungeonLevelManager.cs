@@ -17,12 +17,12 @@ namespace Metamorph.Managers
         [SerializeField] private LevelData currentLevel;
         [SerializeField] private DungeonLayout currentDungeon;
 
-        // ·¹º§ »óÅÂ
+        // ë ˆë²¨ ìƒíƒœ
         private bool isLevelActive = false;
         private Room currentRoom;
         private List<Room> visitedRooms = new List<Room>();
 
-        // ÀÌº¥Æ®
+        // ì´ë²¤íŠ¸
         public System.Action<LevelData> OnLevelStarted;
         public System.Action<LevelData> OnLevelCompleted;
         public System.Action<Room> OnRoomChanged;
@@ -40,7 +40,7 @@ namespace Metamorph.Managers
                 dungeonGenerator = FindAnyObjectByType<DungeonGenerator>();
             }
 
-            // ´øÀü »ı¼º ÀÌº¥Æ® ±¸µ¶
+            // ë˜ì „ ìƒì„± ì´ë²¤íŠ¸ êµ¬ë…
             if (dungeonGenerator != null)
             {
                 dungeonGenerator.OnDungeonGenerated += HandleDungeonGenerated;
@@ -51,16 +51,16 @@ namespace Metamorph.Managers
         {
             if (levelIndex < 0 || levelIndex >= availableLevels.Count)
             {
-                JCDebug.Log($"[DungeonLevelManager] Àß¸øµÈ ·¹º§ ÀÎµ¦½º: {levelIndex}", JCDebug.LogLevel.Error);
+                JCDebug.Log($"[DungeonLevelManager] ì˜ëª»ëœ ë ˆë²¨ ì¸ë±ìŠ¤: {levelIndex}", JCDebug.LogLevel.Error);
                 return;
             }
 
             currentLevelIndex = levelIndex;
             currentLevel = availableLevels[levelIndex];
 
-            JCDebug.Log($"[DungeonLevelManager] ·¹º§ ½ÃÀÛ: {currentLevel.levelName}");
+            JCDebug.Log($"[DungeonLevelManager] ë ˆë²¨ ì‹œì‘: {currentLevel.levelName}");
 
-            // ´øÀü »ı¼º
+            // ë˜ì „ ìƒì„±
             if (dungeonGenerator != null)
             {
                 currentDungeon = dungeonGenerator.GenerateDungeon(currentLevel);
@@ -72,14 +72,14 @@ namespace Metamorph.Managers
             currentDungeon = dungeon;
             isLevelActive = true;
 
-            // ÇÃ·¹ÀÌ¾î¸¦ ½ÃÀÛ ¹æÀ¸·Î ÀÌµ¿
+            // í”Œë ˆì´ì–´ë¥¼ ì‹œì‘ ë°©ìœ¼ë¡œ ì´ë™
             MovePlayerToStartRoom();
 
-            // ¹æ ÀÌº¥Æ® ±¸µ¶
+            // ë°© ì´ë²¤íŠ¸ êµ¬ë…
             SubscribeToRoomEvents();
 
             OnLevelStarted?.Invoke(currentLevel);
-            JCDebug.Log($"[DungeonLevelManager] ´øÀü »ı¼º ¿Ï·á, ·¹º§ È°¼ºÈ­");
+            JCDebug.Log($"[DungeonLevelManager] ë˜ì „ ìƒì„± ì™„ë£Œ, ë ˆë²¨ í™œì„±í™”");
         }
 
         private void MovePlayerToStartRoom()
@@ -117,9 +117,9 @@ namespace Metamorph.Managers
 
         private void HandleRoomCleared(Room room)
         {
-            JCDebug.Log($"[DungeonLevelManager] ¹æ Å¬¸®¾î: {room.name}");
+            JCDebug.Log($"[DungeonLevelManager] ë°© í´ë¦¬ì–´: {room.name}");
 
-            // º¸½º ¹æÀÌ Å¬¸®¾îµÇ¸é ·¹º§ ¿Ï·á
+            // ë³´ìŠ¤ ë°©ì´ í´ë¦¬ì–´ë˜ë©´ ë ˆë²¨ ì™„ë£Œ
             if (room.RoomType == RoomData.RoomType.Boss)
             {
                 CompleteLevel();
@@ -133,14 +133,14 @@ namespace Metamorph.Managers
                 currentRoom = room;
                 OnRoomChanged?.Invoke(room);
 
-                // Ä«¸Ş¶ó °æ°è ¾÷µ¥ÀÌÆ®
+                // ì¹´ë©”ë¼ ê²½ê³„ ì—…ë°ì´íŠ¸
                 UpdateCameraBounds(room);
             }
         }
 
         private void UpdateCameraBounds(Room room)
         {
-            // LevelManager¿Í ¿¬µ¿ÇÏ¿© Ä«¸Ş¶ó °æ°è ¾÷µ¥ÀÌÆ®
+            // LevelManagerì™€ ì—°ë™í•˜ì—¬ ì¹´ë©”ë¼ ê²½ê³„ ì—…ë°ì´íŠ¸
             var levelManager = LevelManager.Instance;
             if (levelManager != null)
             {
@@ -157,23 +157,23 @@ namespace Metamorph.Managers
             isLevelActive = false;
             OnLevelCompleted?.Invoke(currentLevel);
 
-            JCDebug.Log($"[DungeonLevelManager] ·¹º§ ¿Ï·á: {currentLevel.levelName}");
+            JCDebug.Log($"[DungeonLevelManager] ë ˆë²¨ ì™„ë£Œ: {currentLevel.levelName}");
 
-            // ´ÙÀ½ ·¹º§·Î ÁøÇàÇÏ°Å³ª ¸ŞÀÎ ¸Ş´º·Î µ¹¾Æ°¡´Â ·ÎÁ÷
+            // ë‹¤ìŒ ë ˆë²¨ë¡œ ì§„í–‰í•˜ê±°ë‚˜ ë©”ì¸ ë©”ë‰´ë¡œ ëŒì•„ê°€ëŠ” ë¡œì§
             PrepareNextLevel();
         }
 
         private void PrepareNextLevel()
         {
-            // ´ÙÀ½ ·¹º§ÀÌ ÀÖÀ¸¸é ÀÚµ¿ ÁøÇà, ¾øÀ¸¸é °ÔÀÓ ¿Ï·á Ã³¸®
+            // ë‹¤ìŒ ë ˆë²¨ì´ ìˆìœ¼ë©´ ìë™ ì§„í–‰, ì—†ìœ¼ë©´ ê²Œì„ ì™„ë£Œ ì²˜ë¦¬
             if (currentLevelIndex + 1 < availableLevels.Count)
             {
-                // ´ÙÀ½ ·¹º§ ÁØºñ
-                JCDebug.Log("[DungeonLevelManager] ´ÙÀ½ ·¹º§ ÁØºñ Áß...");
+                // ë‹¤ìŒ ë ˆë²¨ ì¤€ë¹„
+                JCDebug.Log("[DungeonLevelManager] ë‹¤ìŒ ë ˆë²¨ ì¤€ë¹„ ì¤‘...");
             }
             else
             {
-                JCDebug.Log("[DungeonLevelManager] ¸ğµç ·¹º§ ¿Ï·á!");
+                JCDebug.Log("[DungeonLevelManager] ëª¨ë“  ë ˆë²¨ ì™„ë£Œ!");
             }
         }
     }

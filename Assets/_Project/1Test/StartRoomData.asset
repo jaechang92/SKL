@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce8acbbfadfabb841886a9c787764273, type: 3}
+  m_Name: StartRoomData
+  m_EditorClassIdentifier: 
+  roomId: start_001
+  roomName: "\uC2DC\uC791\uBC29"
+  roomType: 1
+  roomPrefab: {fileID: 7845468104705784208, guid: f641c504ade57884d9345223b642dcb9, type: 3}
+  roomSize: {x: 10, y: 10}
+  entrancePositions:
+  - {x: 0, y: -5}
+  exitPositions:
+  - {x: 0, y: 5}
+  enemySpawnPoints:
+  - position: {x: 0, y: 0}
+    spawnChance: 0
+    spawnTag: 
+  itemSpawnPoints: []
+  hasShop: 0
+  hasBoss: 0

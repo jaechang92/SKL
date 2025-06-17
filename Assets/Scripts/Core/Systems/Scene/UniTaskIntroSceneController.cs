@@ -352,7 +352,7 @@ namespace Metamorph.UI
                 _loadingStatusText.text = message;
             }
 
-            onComplete().Forget();
+            if(onComplete != null) onComplete().Forget();
         }
 
         /// <summary>

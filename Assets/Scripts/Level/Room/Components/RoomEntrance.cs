@@ -3,7 +3,7 @@ using UnityEngine;
 using System.Collections;
 using CustomDebug;
 
-[RequireComponent(typeof(Collider2D))]
+[RequireComponent(typeof(BoxCollider2D))]
 public class RoomEntrance : MonoBehaviour
 {
     [Header("Entrance Settings")]

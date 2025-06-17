@@ -5,7 +5,7 @@ using Metamorph.Managers;
 using System.Collections;
 using UnityEngine;
 
-[RequireComponent(typeof(Collider2D))]
+[RequireComponent(typeof(BoxCollider2D))]
 public class RoomExit : MonoBehaviour
 {
     [Header("Exit Settings")]

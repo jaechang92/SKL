@@ -11,7 +11,7 @@ public class RoomLayoutGenerator
     private List<RoomPlacement> placedRooms;
     private System.Random random;
 
-    // »ı¼º ¼³Á¤
+    // ìƒì„± ì„¤ì •
     private readonly int maxPlacementAttempts = 100;
     private readonly float minRoomSpacing = 1f;
 
@@ -22,51 +22,51 @@ public class RoomLayoutGenerator
         placedRooms = new List<RoomPlacement>();
         random = new System.Random();
     }
-
+    
     /// <summary>
-    /// ½ÃÀÛ ¹æ ¹èÄ¡
+    /// ì‹œì‘ ë°© ë°°ì¹˜
     /// </summary>
     public RoomPlacement PlaceStartRoom()
     {
-        JCDebug.Log("[RoomLayoutGenerator] ½ÃÀÛ ¹æ ¹èÄ¡ ½ÃÀÛ");
+        JCDebug.Log("[RoomLayoutGenerator] ì‹œì‘ ë°© ë°°ì¹˜ ì‹œì‘");
 
         var startRoomData = GetRoomDataByType(RoomData.RoomType.Start);
         if (startRoomData == null)
         {
-            JCDebug.Log("½ÃÀÛ ¹æ µ¥ÀÌÅÍ¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù!", JCDebug.LogLevel.Error);
+            JCDebug.Log("ì‹œì‘ ë°© ë°ì´í„°ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤!", JCDebug.LogLevel.Error);
             return null;
         }
 
-        // ½ÃÀÛ ¹æÀº ¸Ê Áß¾Ó ±ÙÃ³¿¡ ¹èÄ¡
+        // ì‹œì‘ ë°©ì€ ë§µ ì¤‘ì•™ ê·¼ì²˜ì— ë°°ì¹˜
         Vector2Int startPosition = CalculateStartRoomPosition();
-        var startPlacement = new RoomPlacement(startRoomData, startPosition);
-
+        var startPlacement = new RoomPlacement(startRoomData, new Vector2Int(10, 10));
+        JCDebug.Log($"{startPlacement.gridPosition},gridSystem:{gridSystem.Width},{gridSystem.Height}", JCDebug.LogLevel.Custom);
         if (startPlacement.ValidatePlacement(gridSystem, placedRooms))
         {
             placedRooms.Add(startPlacement);
             MarkGridCellsOccupied(startPlacement);
 
-            JCDebug.Log($"½ÃÀÛ ¹æ ¹èÄ¡ ¿Ï·á: {startPosition}");
+            JCDebug.Log($"ì‹œì‘ ë°© ë°°ì¹˜ ì™„ë£Œ: {startPosition}");
             return startPlacement;
         }
 
-        JCDebug.Log("½ÃÀÛ ¹æ ¹èÄ¡ ½ÇÆĞ!", JCDebug.LogLevel.Error);
+        JCDebug.Log("ì‹œì‘ ë°© ë°°ì¹˜ ì‹¤íŒ¨!", JCDebug.LogLevel.Error);
         return null;
     }
 
     /// <summary>
-    /// ÀÏ¹İ ¹æµé ¹èÄ¡
+    /// ì¼ë°˜ ë°©ë“¤ ë°°ì¹˜
     /// </summary>
     public List<RoomPlacement> PlaceNormalRooms()
     {
-        JCDebug.Log("[RoomLayoutGenerator] ÀÏ¹İ ¹æµé ¹èÄ¡ ½ÃÀÛ");
+        JCDebug.Log("[RoomLayoutGenerator] ì¼ë°˜ ë°©ë“¤ ë°°ì¹˜ ì‹œì‘");
 
         var normalRooms = new List<RoomPlacement>();
         var normalRoomData = GetRoomDatasByType(RoomData.RoomType.Normal);
 
         if (normalRoomData.Count == 0)
         {
-            JCDebug.Log("ÀÏ¹İ ¹æ µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù!", JCDebug.LogLevel.Warning);
+            JCDebug.Log("ì¼ë°˜ ë°© ë°ì´í„°ê°€ ì—†ìŠµë‹ˆë‹¤!", JCDebug.LogLevel.Warning);
             return normalRooms;
         }
 
@@ -78,13 +78,13 @@ public class RoomLayoutGenerator
         {
             attempts++;
 
-            // ·£´ıÇÑ ÀÏ¹İ ¹æ ¼±ÅÃ
+            // ëœë¤í•œ ì¼ë°˜ ë°© ì„ íƒ
             var roomData = normalRoomData[random.Next(normalRoomData.Count)];
 
-            // ¹èÄ¡ À§Ä¡ Ã£±â
+            // ë°°ì¹˜ ìœ„ì¹˜ ì°¾ê¸°
             Vector2Int position = FindValidPlacementPosition(roomData);
 
-            if (position != Vector2Int.one * -1) // À¯È¿ÇÑ À§Ä¡¸¦ Ã£¾ÒÀ¸¸é
+            if (position != Vector2Int.one * -1) // ìœ íš¨í•œ ìœ„ì¹˜ë¥¼ ì°¾ì•˜ìœ¼ë©´
             {
                 var placement = new RoomPlacement(roomData, position);
 
@@ -95,21 +95,21 @@ public class RoomLayoutGenerator
                     MarkGridCellsOccupied(placement);
                     placedCount++;
 
-                    JCDebug.Log($"ÀÏ¹İ ¹æ ¹èÄ¡: {roomData.roomName} at {position}");
+                    JCDebug.Log($"ì¼ë°˜ ë°© ë°°ì¹˜: {roomData.roomName} at {position}");
                 }
             }
         }
 
-        JCDebug.Log($"ÀÏ¹İ ¹æ ¹èÄ¡ ¿Ï·á: {placedCount}/{targetRoomCount}°³");
+        JCDebug.Log($"ì¼ë°˜ ë°© ë°°ì¹˜ ì™„ë£Œ: {placedCount}/{targetRoomCount}ê°œ");
         return normalRooms;
     }
 
     /// <summary>
-    /// º¸½º ¹æ ¹èÄ¡
+    /// ë³´ìŠ¤ ë°© ë°°ì¹˜
     /// </summary>
     public RoomPlacement PlaceBossRoom()
     {
-        JCDebug.Log("[RoomLayoutGenerator] º¸½º ¹æ ¹èÄ¡ ½ÃÀÛ");
+        JCDebug.Log("[RoomLayoutGenerator] ë³´ìŠ¤ ë°© ë°°ì¹˜ ì‹œì‘");
 
         var bossRoomData = levelData.bossRoom;
         if (bossRoomData == null)
@@ -119,11 +119,11 @@ public class RoomLayoutGenerator
 
         if (bossRoomData == null)
         {
-            JCDebug.Log("º¸½º ¹æ µ¥ÀÌÅÍ¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù!", JCDebug.LogLevel.Error);
+            JCDebug.Log("ë³´ìŠ¤ ë°© ë°ì´í„°ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤!", JCDebug.LogLevel.Error);
             return null;
         }
 
-        // º¸½º ¹æÀº ½ÃÀÛ¹æ¿¡¼­ °¡Àå ¸Õ À§Ä¡¿¡ ¹èÄ¡
+        // ë³´ìŠ¤ ë°©ì€ ì‹œì‘ë°©ì—ì„œ ê°€ì¥ ë¨¼ ìœ„ì¹˜ì— ë°°ì¹˜
         Vector2Int bossPosition = FindFarthestPositionFromStart(bossRoomData);
 
         if (bossPosition != Vector2Int.one * -1)
@@ -135,40 +135,40 @@ public class RoomLayoutGenerator
                 placedRooms.Add(bossPlacement);
                 MarkGridCellsOccupied(bossPlacement);
 
-                JCDebug.Log($"º¸½º ¹æ ¹èÄ¡ ¿Ï·á: {bossPosition}");
+                JCDebug.Log($"ë³´ìŠ¤ ë°© ë°°ì¹˜ ì™„ë£Œ: {bossPosition}");
                 return bossPlacement;
             }
         }
 
-        JCDebug.Log("º¸½º ¹æ ¹èÄ¡ ½ÇÆĞ!", JCDebug.LogLevel.Error);
+        JCDebug.Log("ë³´ìŠ¤ ë°© ë°°ì¹˜ ì‹¤íŒ¨!", JCDebug.LogLevel.Error);
         return null;
     }
 
     /// <summary>
-    /// Æ¯¼ö ¹æµé ¹èÄ¡ (º¸¹°¹æ, »óÁ¡ µî)
+    /// íŠ¹ìˆ˜ ë°©ë“¤ ë°°ì¹˜ (ë³´ë¬¼ë°©, ìƒì  ë“±)
     /// </summary>
     public List<RoomPlacement> PlaceSpecialRooms()
     {
-        JCDebug.Log("[RoomLayoutGenerator] Æ¯¼ö ¹æµé ¹èÄ¡ ½ÃÀÛ");
+        JCDebug.Log("[RoomLayoutGenerator] íŠ¹ìˆ˜ ë°©ë“¤ ë°°ì¹˜ ì‹œì‘");
 
         var specialRooms = new List<RoomPlacement>();
 
-        // º¸¹°¹æ ¹èÄ¡
+        // ë³´ë¬¼ë°© ë°°ì¹˜
         var treasureRoom = PlaceTreasureRoom();
         if (treasureRoom != null)
         {
             specialRooms.Add(treasureRoom);
         }
 
-        // »óÁ¡ ¹èÄ¡
+        // ìƒì  ë°°ì¹˜
         var shopRoom = PlaceShopRoom();
         if (shopRoom != null)
         {
             specialRooms.Add(shopRoom);
         }
 
-        // ºñ¹Ğ¹æ ¹èÄ¡ (È®·üÀû)
-        if (random.NextDouble() < 0.3f) // 30% È®·ü
+        // ë¹„ë°€ë°© ë°°ì¹˜ (í™•ë¥ ì )
+        if (random.NextDouble() < 0.3f) // 30% í™•ë¥ 
         {
             var secretRoom = PlaceSecretRoom();
             if (secretRoom != null)
@@ -177,7 +177,7 @@ public class RoomLayoutGenerator
             }
         }
 
-        JCDebug.Log($"Æ¯¼ö ¹æ ¹èÄ¡ ¿Ï·á: {specialRooms.Count}°³");
+        JCDebug.Log($"íŠ¹ìˆ˜ ë°© ë°°ì¹˜ ì™„ë£Œ: {specialRooms.Count}ê°œ");
         return specialRooms;
     }
 
@@ -186,7 +186,7 @@ public class RoomLayoutGenerator
         var treasureRoomData = levelData.treasureRoom ?? GetRoomDataByType(RoomData.RoomType.Treasure);
         if (treasureRoomData == null) return null;
 
-        // º¸¹°¹æÀº ¸·´Ù¸¥ ±æ¿¡ ¹èÄ¡
+        // ë³´ë¬¼ë°©ì€ ë§‰ë‹¤ë¥¸ ê¸¸ì— ë°°ì¹˜
         Vector2Int position = FindDeadEndPosition(treasureRoomData);
 
         if (position != Vector2Int.one * -1)
@@ -208,7 +208,7 @@ public class RoomLayoutGenerator
         var shopRoomData = GetRoomDataByType(RoomData.RoomType.Shop);
         if (shopRoomData == null) return null;
 
-        // »óÁ¡Àº Á¢±ÙÇÏ±â ½¬¿î À§Ä¡¿¡ ¹èÄ¡
+        // ìƒì ì€ ì ‘ê·¼í•˜ê¸° ì‰¬ìš´ ìœ„ì¹˜ì— ë°°ì¹˜
         Vector2Int position = FindAccessiblePosition(shopRoomData);
 
         if (position != Vector2Int.one * -1)
@@ -230,7 +230,7 @@ public class RoomLayoutGenerator
         var secretRoomData = GetRoomDataByType(RoomData.RoomType.Secret);
         if (secretRoomData == null) return null;
 
-        // ºñ¹Ğ¹æÀº ¼û°ÜÁø À§Ä¡¿¡ ¹èÄ¡
+        // ë¹„ë°€ë°©ì€ ìˆ¨ê²¨ì§„ ìœ„ì¹˜ì— ë°°ì¹˜
         Vector2Int position = FindHiddenPosition(secretRoomData);
 
         if (position != Vector2Int.one * -1)
@@ -247,11 +247,11 @@ public class RoomLayoutGenerator
         return null;
     }
 
-    #region À§Ä¡ °è»ê ¸Ş¼­µåµé
+    #region ìœ„ì¹˜ ê³„ì‚° ë©”ì„œë“œë“¤
 
     private Vector2Int CalculateStartRoomPosition()
     {
-        // ¸Ê Áß¾Ó ±ÙÃ³¿¡¼­ ·£´ı À§Ä¡
+        // ë§µ ì¤‘ì•™ ê·¼ì²˜ì—ì„œ ëœë¤ ìœ„ì¹˜
         int centerX = gridSystem.Width / 2;
         int centerY = gridSystem.Height / 2;
         int range = Mathf.Min(gridSystem.Width, gridSystem.Height) / 4;
@@ -281,7 +281,7 @@ public class RoomLayoutGenerator
             }
         }
 
-        return Vector2Int.one * -1; // ½ÇÆĞ
+        return Vector2Int.one * -1; // ì‹¤íŒ¨
     }
 
     private Vector2Int FindFarthestPositionFromStart(RoomData roomData)
@@ -315,7 +315,7 @@ public class RoomLayoutGenerator
 
     private Vector2Int FindDeadEndPosition(RoomData roomData)
     {
-        // ¸·´Ù¸¥ ±æ À§Ä¡ Ã£±â (¿¬°á °¡´ÉÇÑ ¹æÇâÀÌ 1°³ÀÎ À§Ä¡)
+        // ë§‰ë‹¤ë¥¸ ê¸¸ ìœ„ì¹˜ ì°¾ê¸° (ì—°ê²° ê°€ëŠ¥í•œ ë°©í–¥ì´ 1ê°œì¸ ìœ„ì¹˜)
         for (int x = 0; x <= gridSystem.Width - roomData.roomSize.x; x++)
         {
             for (int y = 0; y <= gridSystem.Height - roomData.roomSize.y; y++)
@@ -333,12 +333,12 @@ public class RoomLayoutGenerator
             }
         }
 
-        return FindValidPlacementPosition(roomData); // ¸·´Ù¸¥ ±æÀÌ ¾øÀ¸¸é ÀÏ¹İ À§Ä¡
+        return FindValidPlacementPosition(roomData); // ë§‰ë‹¤ë¥¸ ê¸¸ì´ ì—†ìœ¼ë©´ ì¼ë°˜ ìœ„ì¹˜
     }
 
     private Vector2Int FindAccessiblePosition(RoomData roomData)
     {
-        // Á¢±ÙÇÏ±â ½¬¿î À§Ä¡ Ã£±â (¿¬°á °¡´ÉÇÑ ¹æÇâÀÌ 2-3°³ÀÎ À§Ä¡)
+        // ì ‘ê·¼í•˜ê¸° ì‰¬ìš´ ìœ„ì¹˜ ì°¾ê¸° (ì—°ê²° ê°€ëŠ¥í•œ ë°©í–¥ì´ 2-3ê°œì¸ ìœ„ì¹˜)
         for (int x = 0; x <= gridSystem.Width - roomData.roomSize.x; x++)
         {
             for (int y = 0; y <= gridSystem.Height - roomData.roomSize.y; y++)
@@ -361,7 +361,7 @@ public class RoomLayoutGenerator
 
     private Vector2Int FindHiddenPosition(RoomData roomData)
     {
-        // ¼û°ÜÁø À§Ä¡ Ã£±â (°¡ÀåÀÚ¸® ¶Ç´Â °í¸³µÈ À§Ä¡)
+        // ìˆ¨ê²¨ì§„ ìœ„ì¹˜ ì°¾ê¸° (ê°€ì¥ìë¦¬ ë˜ëŠ” ê³ ë¦½ëœ ìœ„ì¹˜)
         var edgePositions = new List<Vector2Int>();
 
         for (int x = 0; x <= gridSystem.Width - roomData.roomSize.x; x++)
@@ -391,7 +391,7 @@ public class RoomLayoutGenerator
 
     private bool IsPositionValid(Vector2Int position, Vector2Int size)
     {
-        // ±×¸®µå ¹üÀ§ È®ÀÎ
+        // ê·¸ë¦¬ë“œ ë²”ìœ„ í™•ì¸
         if (position.x < 0 || position.y < 0 ||
             position.x + size.x > gridSystem.Width ||
             position.y + size.y > gridSystem.Height)
@@ -399,7 +399,7 @@ public class RoomLayoutGenerator
             return false;
         }
 
-        // ´Ù¸¥ ¹æ°úÀÇ °ãÄ§ È®ÀÎ
+        // ë‹¤ë¥¸ ë°©ê³¼ì˜ ê²¹ì¹¨ í™•ì¸
         Rect newRect = new Rect(position.x, position.y, size.x, size.y);
 
         foreach (var placement in placedRooms)
@@ -407,7 +407,7 @@ public class RoomLayoutGenerator
             Rect existingRect = new Rect(placement.gridPosition.x, placement.gridPosition.y,
                                        placement.size.x, placement.size.y);
 
-            // ÃÖ¼Ò °£°İ Àû¿ë
+            // ìµœì†Œ ê°„ê²© ì ìš©
             existingRect.x -= minRoomSpacing;
             existingRect.y -= minRoomSpacing;
             existingRect.width += minRoomSpacing * 2;
@@ -433,7 +433,7 @@ public class RoomLayoutGenerator
 
             if (gridSystem.IsValidPosition(checkPos))
             {
-                // ÇØ´ç ¹æÇâ¿¡ ¹æÀÌ ÀÖ°Å³ª ¿¬°á °¡´ÉÇÑÁö È®ÀÎ
+                // í•´ë‹¹ ë°©í–¥ì— ë°©ì´ ìˆê±°ë‚˜ ì—°ê²° ê°€ëŠ¥í•œì§€ í™•ì¸
                 bool hasRoomInDirection = placedRooms.Any(r =>
                     Vector2Int.Distance(r.gridPosition, checkPos) < 2f);
 
@@ -461,7 +461,7 @@ public class RoomLayoutGenerator
 
     #endregion
 
-    #region À¯Æ¿¸®Æ¼ ¸Ş¼­µåµé
+    #region ìœ í‹¸ë¦¬í‹° ë©”ì„œë“œë“¤
 
     private RoomData GetRoomDataByType(RoomData.RoomType roomType)
     {

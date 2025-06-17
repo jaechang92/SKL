@@ -1,6 +1,7 @@
 // Assets/Scripts/Level/Data/RoomPlacement.cs
 using UnityEngine;
 using System.Collections.Generic;
+using CustomDebug;
 
 [System.Serializable]
 public class RoomPlacement
@@ -14,7 +15,7 @@ public class RoomPlacement
     [Header("Priority & Weight")]
     [Range(0f, 1f)]
     public float placementPriority = 0.5f;
-    public int placementOrder = 0; // 0 = ½ÃÀÛ¹æ, 999 = º¸½º¹æ
+    public int placementOrder = 0; // 0 = ì‹œì‘ë°©, 999 = ë³´ìŠ¤ë°©
 
     [Header("Connection Requirements")]
     public List<Vector2Int> requiredConnections = new List<Vector2Int>();
@@ -23,9 +24,9 @@ public class RoomPlacement
     public int maxConnections = 4;
 
     [Header("Placement Constraints")]
-    public bool mustBeIsolated = false; // Æ¯º°ÇÑ ¹æ (º¸¹°¹æ µî)
-    public bool preferEdgePosition = false; // °¡ÀåÀÚ¸® ¼±È£
-    public bool preferCenterPosition = false; // Áß¾Ó ¼±È£
+    public bool mustBeIsolated = false; // íŠ¹ë³„í•œ ë°© (ë³´ë¬¼ë°© ë“±)
+    public bool preferEdgePosition = false; // ê°€ì¥ìë¦¬ ì„ í˜¸
+    public bool preferCenterPosition = false; // ì¤‘ì•™ ì„ í˜¸
     public float minDistanceFromStart = 0f;
     public float maxDistanceFromStart = float.MaxValue;
 
@@ -33,7 +34,7 @@ public class RoomPlacement
     public bool isValid = true;
     public string invalidReason = "";
 
-    // »ı¼ºÀÚ
+    // ìƒì„±ì
     public RoomPlacement()
     {
         requiredConnections = new List<Vector2Int>();
@@ -50,7 +51,7 @@ public class RoomPlacement
     }
 
     /// <summary>
-    /// ¹æ Å¸ÀÔ¿¡ µû¸¥ ¹èÄ¡ ¼ø¼­ ¼³Á¤
+    /// ë°© íƒ€ì…ì— ë”°ë¥¸ ë°°ì¹˜ ìˆœì„œ ì„¤ì •
     /// </summary>
     private void SetPlacementOrderFromRoomType()
     {
@@ -110,14 +111,14 @@ public class RoomPlacement
     }
 
     /// <summary>
-    /// ¹èÄ¡°¡ À¯È¿ÇÑÁö °ËÁõ
+    /// ë°°ì¹˜ê°€ ìœ íš¨í•œì§€ ê²€ì¦
     /// </summary>
     public bool ValidatePlacement(GridSystem grid, List<RoomPlacement> existingPlacements)
     {
         isValid = true;
         invalidReason = "";
 
-        // ±×¸®µå ¹üÀ§ ³»ÀÎÁö È®ÀÎ
+        // ê·¸ë¦¬ë“œ ë²”ìœ„ ë‚´ì¸ì§€ í™•ì¸
         if (!IsWithinGridBounds(grid))
         {
             isValid = false;
@@ -125,7 +126,7 @@ public class RoomPlacement
             return false;
         }
 
-        // ´Ù¸¥ ¹æ°ú °ãÄ¡´ÂÁö È®ÀÎ
+        // ë‹¤ë¥¸ ë°©ê³¼ ê²¹ì¹˜ëŠ”ì§€ í™•ì¸
         if (HasOverlapWithExisting(existingPlacements))
         {
             isValid = false;
@@ -133,7 +134,7 @@ public class RoomPlacement
             return false;
         }
 
-        // ½ÃÀÛ¹æ°úÀÇ °Å¸® Á¦¾à È®ÀÎ
+        // ì‹œì‘ë°©ê³¼ì˜ ê±°ë¦¬ ì œì•½ í™•ì¸
         if (!ValidateDistanceConstraints(existingPlacements))
         {
             isValid = false;
@@ -146,6 +147,8 @@ public class RoomPlacement
 
     private bool IsWithinGridBounds(GridSystem grid)
     {
+        JCDebug.Log($"{gridPosition.x + size.x <= grid.Width} && {gridPosition.y + size.y <= grid.Height}", JCDebug.LogLevel.Custom);
+
         return gridPosition.x >= 0 && gridPosition.y >= 0 &&
                gridPosition.x + size.x <= grid.Width &&
                gridPosition.y + size.y <= grid.Height;
@@ -174,7 +177,7 @@ public class RoomPlacement
     private bool ValidateDistanceConstraints(List<RoomPlacement> existingPlacements)
     {
         var startRoom = existingPlacements.Find(p => p.roomData?.roomType == RoomData.RoomType.Start);
-        if (startRoom == null) return true; // ½ÃÀÛ¹æÀÌ ¾øÀ¸¸é Á¦¾à ¾øÀ½
+        if (startRoom == null) return true; // ì‹œì‘ë°©ì´ ì—†ìœ¼ë©´ ì œì•½ ì—†ìŒ
 
         float distanceToStart = Vector2Int.Distance(gridPosition, startRoom.gridPosition);
 
@@ -182,7 +185,7 @@ public class RoomPlacement
     }
 
     /// <summary>
-    /// ¿¬°á Æ÷ÀÎÆ® Ãß°¡
+    /// ì—°ê²° í¬ì¸íŠ¸ ì¶”ê°€
     /// </summary>
     public void AddRequiredConnection(Vector2Int connectionPoint)
     {
@@ -201,11 +204,11 @@ public class RoomPlacement
     }
 
     /// <summary>
-    /// ÀÌ ¹æÀÌ Æ¯Á¤ À§Ä¡¿¡ ¿¬°á °¡´ÉÇÑÁö È®ÀÎ
+    /// ì´ ë°©ì´ íŠ¹ì • ìœ„ì¹˜ì— ì—°ê²° ê°€ëŠ¥í•œì§€ í™•ì¸
     /// </summary>
     public bool CanConnectTo(Vector2Int targetPosition)
     {
-        // ÀÎÁ¢ÇÑ À§Ä¡ÀÎÁö È®ÀÎ (»óÇÏÁÂ¿ì)
+        // ì¸ì ‘í•œ ìœ„ì¹˜ì¸ì§€ í™•ì¸ (ìƒí•˜ì¢Œìš°)
         int deltaX = Mathf.Abs(gridPosition.x - targetPosition.x);
         int deltaY = Mathf.Abs(gridPosition.y - targetPosition.y);
 
@@ -213,7 +216,7 @@ public class RoomPlacement
     }
 
     /// <summary>
-    /// ¹èÄ¡ Á¡¼ö °è»ê (AI ¹èÄ¡ ¾Ë°í¸®Áò¿ë)
+    /// ë°°ì¹˜ ì ìˆ˜ ê³„ì‚° (AI ë°°ì¹˜ ì•Œê³ ë¦¬ì¦˜ìš©)
     /// </summary>
     public float CalculatePlacementScore(GridSystem grid, List<RoomPlacement> existingPlacements)
     {
@@ -221,7 +224,7 @@ public class RoomPlacement
 
         float score = placementPriority;
 
-        // °¡ÀåÀÚ¸® ¼±È£µµ
+        // ê°€ì¥ìë¦¬ ì„ í˜¸ë„
         if (preferEdgePosition)
         {
             bool isOnEdge = gridPosition.x == 0 || gridPosition.y == 0 ||
@@ -230,7 +233,7 @@ public class RoomPlacement
             score += isOnEdge ? 0.3f : -0.2f;
         }
 
-        // Áß¾Ó ¼±È£µµ
+        // ì¤‘ì•™ ì„ í˜¸ë„
         if (preferCenterPosition)
         {
             Vector2 gridCenter = new Vector2(grid.Width / 2f, grid.Height / 2f);
@@ -239,7 +242,7 @@ public class RoomPlacement
             score += (1f - normalizedDistance) * 0.3f;
         }
 
-        // °í¸³ ¿ä±¸»çÇ×
+        // ê³ ë¦½ ìš”êµ¬ì‚¬í•­
         if (mustBeIsolated)
         {
             int nearbyRooms = CountNearbyRooms(existingPlacements, 2);
