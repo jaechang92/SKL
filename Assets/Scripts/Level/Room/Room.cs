@@ -1,7 +1,8 @@
-// Assets/Scripts/Level/Room/Room.cs ¼öÁ¤
+// Assets/Scripts/Level/Room/Room.cs ìˆ˜ì •
 using UnityEngine;
 using System.Collections.Generic;
 using CustomDebug;
+using Metamorph.Level.Generation;
 
 public class Room : MonoBehaviour
 {
@@ -16,12 +17,12 @@ public class Room : MonoBehaviour
     [SerializeField] private List<Transform> enemySpawnPoints = new List<Transform>();
     [SerializeField] private List<Transform> itemSpawnPoints = new List<Transform>();
 
-    // ·±Å¸ÀÓ µ¥ÀÌÅÍ
+    // ëŸ°íƒ€ì„ ë°ì´í„°
     private GeneratedRoom roomData;
     private List<GameObject> spawnedEnemies = new List<GameObject>();
     private List<GameObject> spawnedItems = new List<GameObject>();
 
-    // ÀÌº¥Æ®
+    // ì´ë²¤íŠ¸
     public System.Action<Room> OnRoomEntered;
     public System.Action<Room> OnRoomCleared;
     public System.Action<Room> OnRoomExited;
@@ -29,18 +30,18 @@ public class Room : MonoBehaviour
     public bool IsCleared => isCleared;
     public bool IsVisited => isVisited;
     public bool IsActive => isActive;
-    public RoomData.RoomType RoomType => roomData?.roomData?.roomType ?? RoomData.RoomType.Normal;
+    public RoomType RoomType => roomData?.Type ?? RoomType.Normal;
 
     public void Initialize(GeneratedRoom data)
     {
         roomData = data;
         SetupRoomComponents();
-        JCDebug.Log($"[Room] ¹æ ÃÊ±âÈ­: {data.roomData.roomName}");
+        JCDebug.Log($"[Room] ë°© ì´ˆê¸°í™”: {roomData.RoomName}");
     }
 
     private void SetupRoomComponents()
     {
-        // ÀÔ±¸/Ãâ±¸ ÀÚµ¿ Å½Áö
+        // ì…êµ¬/ì¶œêµ¬ ìë™ íƒì§€
         if (entrances.Count == 0)
         {
             entrances.AddRange(GetComponentsInChildren<RoomEntrance>());
@@ -51,10 +52,10 @@ public class Room : MonoBehaviour
             exits.AddRange(GetComponentsInChildren<RoomExit>());
         }
 
-        // ½ºÆù Æ÷ÀÎÆ® ÀÚµ¿ Å½Áö
+        // ìŠ¤í° í¬ì¸íŠ¸ ìë™ íƒì§€
         SetupSpawnPoints();
 
-        // ÀÔ±¸/Ãâ±¸ ÀÌº¥Æ® ¿¬°á
+        // ì…êµ¬/ì¶œêµ¬ ì´ë²¤íŠ¸ ì—°ê²°
         foreach (var entrance in entrances)
         {
             entrance.OnPlayerEntered += HandlePlayerEntered;
@@ -68,7 +69,7 @@ public class Room : MonoBehaviour
 
     private void SetupSpawnPoints()
     {
-        // "EnemySpawn" ÅÂ±×·Î Àû ½ºÆù Æ÷ÀÎÆ® Ã£±â
+        // "EnemySpawn" íƒœê·¸ë¡œ ì  ìŠ¤í° í¬ì¸íŠ¸ ì°¾ê¸°
         GameObject[] enemySpawns = GameObject.FindGameObjectsWithTag("EnemySpawn");
         foreach (var spawn in enemySpawns)
         {
@@ -78,7 +79,7 @@ public class Room : MonoBehaviour
             }
         }
 
-        // "ItemSpawn" ÅÂ±×·Î ¾ÆÀÌÅÛ ½ºÆù Æ÷ÀÎÆ® Ã£±â
+        // "ItemSpawn" íƒœê·¸ë¡œ ì•„ì´í…œ ìŠ¤í° í¬ì¸íŠ¸ ì°¾ê¸°
         GameObject[] itemSpawns = GameObject.FindGameObjectsWithTag("ItemSpawn");
         foreach (var spawn in itemSpawns)
         {
@@ -110,14 +111,14 @@ public class Room : MonoBehaviour
 
         isActive = true;
         OnRoomEntered?.Invoke(this);
-        JCDebug.Log($"[Room] ÇÃ·¹ÀÌ¾î°¡ ¹æ¿¡ ÀÔÀå: {roomData?.roomData?.roomName}");
+        JCDebug.Log($"[Room] í”Œë ˆì´ì–´ê°€ ë°©ì— ì…ì¥: {roomData?.RoomName}");
     }
 
     private void HandlePlayerExited()
     {
         isActive = false;
         OnRoomExited?.Invoke(this);
-        JCDebug.Log($"[Room] ÇÃ·¹ÀÌ¾î°¡ ¹æ¿¡¼­ ÅğÀå: {roomData?.roomData?.roomName}");
+        JCDebug.Log($"[Room] í”Œë ˆì´ì–´ê°€ ë°©ì—ì„œ í‡´ì¥: {roomData?.RoomName}");
     }
 
     private void ActivateRoom()
@@ -125,42 +126,44 @@ public class Room : MonoBehaviour
         SpawnEnemies();
         SpawnItems();
 
-        // ¹æ È°¼ºÈ­ È¿°ú
+        // ë°© í™œì„±í™” íš¨ê³¼
         PlayActivationEffects();
     }
 
     private void SpawnEnemies()
     {
-        if (roomData?.roomData?.enemySpawnPoints == null) return;
+        // ì°¨í›„ êµ¬í˜„ ì  ìŠ¤í° ë¡œì§
+        //if (roomData?.enemySpawnPoints == null) return;
 
-        foreach (var spawnPoint in roomData.roomData.enemySpawnPoints)
-        {
-            if (Random.value <= spawnPoint.spawnChance)
-            {
-                // EnemyManager¸¦ ÅëÇØ Àû ½ºÆù
-                // ½ÇÁ¦ ±¸Çö¿¡¼­´Â EnemyManager.Instance.SpawnEnemy() »ç¿ë
-                JCDebug.Log($"[Room] Àû ½ºÆù: {spawnPoint.position}");
-            }
-        }
+        //foreach (var spawnPoint in roomData.enemySpawnPoints)
+        //{
+        //    if (Random.value <= spawnPoint.spawnChance)
+        //    {
+        //        // EnemyManagerë¥¼ í†µí•´ ì  ìŠ¤í°
+        //        // ì‹¤ì œ êµ¬í˜„ì—ì„œëŠ” EnemyManager.Instance.SpawnEnemy() ì‚¬ìš©
+        //        JCDebug.Log($"[Room] ì  ìŠ¤í°: {spawnPoint.position}");
+        //    }
+        //}
     }
 
     private void SpawnItems()
     {
-        if (roomData?.roomData?.itemSpawnPoints == null) return;
+        // ì°¨í›„ êµ¬í˜„ ì•„ì´í…œ ìŠ¤í° ë¡œì§
+        //if (roomData?.roomData?.itemSpawnPoints == null) return;
 
-        foreach (var spawnPoint in roomData.roomData.itemSpawnPoints)
-        {
-            if (Random.value <= spawnPoint.spawnChance)
-            {
-                // ItemManager¸¦ ÅëÇØ ¾ÆÀÌÅÛ ½ºÆù
-                JCDebug.Log($"[Room] ¾ÆÀÌÅÛ ½ºÆù: {spawnPoint.position}");
-            }
-        }
+        //foreach (var spawnPoint in roomData.roomData.itemSpawnPoints)
+        //{
+        //    if (Random.value <= spawnPoint.spawnChance)
+        //    {
+        //        // ItemManagerë¥¼ í†µí•´ ì•„ì´í…œ ìŠ¤í°
+        //        JCDebug.Log($"[Room] ì•„ì´í…œ ìŠ¤í°: {spawnPoint.position}");
+        //    }
+        //}
     }
 
     private void PlayActivationEffects()
     {
-        // ¹æ È°¼ºÈ­ ½Ã°¢/À½Çâ È¿°ú
+        // ë°© í™œì„±í™” ì‹œê°/ìŒí–¥ íš¨ê³¼
         var particles = GetComponentInChildren<ParticleSystem>();
         if (particles != null)
         {
@@ -170,7 +173,7 @@ public class Room : MonoBehaviour
 
     public void CheckClearConditions()
     {
-        // ¸ğµç ÀûÀÌ Ã³Ä¡µÇ¾ú´ÂÁö È®ÀÎ
+        // ëª¨ë“  ì ì´ ì²˜ì¹˜ë˜ì—ˆëŠ”ì§€ í™•ì¸
         spawnedEnemies.RemoveAll(enemy => enemy == null);
 
         if (spawnedEnemies.Count == 0 && !isCleared)
@@ -184,14 +187,14 @@ public class Room : MonoBehaviour
         isCleared = true;
         OnRoomCleared?.Invoke(this);
 
-        // ¹æ Å¬¸®¾î º¸»ó
+        // ë°© í´ë¦¬ì–´ ë³´ìƒ
         SpawnClearRewards();
 
-        JCDebug.Log($"[Room] ¹æ Å¬¸®¾î: {roomData?.roomData?.roomName}");
+        JCDebug.Log($"[Room] ë°© í´ë¦¬ì–´: {roomData?.RoomName}");
     }
 
     private void SpawnClearRewards()
     {
-        // Å¬¸®¾î º¸»ó ½ºÆù (°æÇèÄ¡, °ñµå, ¾ÆÀÌÅÛ µî)
+        // í´ë¦¬ì–´ ë³´ìƒ ìŠ¤í° (ê²½í—˜ì¹˜, ê³¨ë“œ, ì•„ì´í…œ ë“±)
     }
 }

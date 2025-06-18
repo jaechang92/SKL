@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 3
   tags:
   - MapBoundary
+  - EnemySpawn
+  - ItemSpawn
   layers:
   - Default
   - TransparentFX

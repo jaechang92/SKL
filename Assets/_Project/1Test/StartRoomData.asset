@@ -17,14 +17,9 @@ MonoBehaviour:
   roomType: 1
   roomPrefab: {fileID: 7845468104705784208, guid: f641c504ade57884d9345223b642dcb9, type: 3}
   roomSize: {x: 10, y: 10}
-  entrancePositions:
-  - {x: 0, y: -5}
-  exitPositions:
-  - {x: 0, y: 5}
-  enemySpawnPoints:
-  - position: {x: 0, y: 0}
-    spawnChance: 0
-    spawnTag: 
+  entrancePositions: []
+  exitPositions: []
+  enemySpawnPoints: []
   itemSpawnPoints: []
   hasShop: 0
   hasBoss: 0
