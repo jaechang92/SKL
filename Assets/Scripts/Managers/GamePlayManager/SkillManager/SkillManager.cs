@@ -1,10 +1,13 @@
 // Assets/Scripts/Managers/SkillManager.cs
-using UnityEngine;
-using UnityEngine.Events;
-using System.Collections.Generic;
+using CustomDebug;
+using Cysharp.Threading.Tasks;
 using Metamorph.Core.Interfaces;
 using Metamorph.Forms.Base;
-using CustomDebug;
+using Metamorph.Initialization;
+using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.Events;
 
 namespace Metamorph.Managers
 {
@@ -12,10 +15,19 @@ namespace Metamorph.Managers
     /// 스킬 관리를 담당하는 매니저
     /// 스킬 참조 관리, 쿨다운 처리, UI 업데이트 담당
     /// </summary>
-    public class SkillManager : SingletonManager<SkillManager>
+    public class SkillManager : SingletonManager<SkillManager>, IInitializableAsync
     {
         [Header("Debug")]
         [SerializeField] private bool _showDebugInfo = false;
+
+
+        [Header("Skill Database")]
+        [SerializeField] private SkillDatabase _skillDatabase;
+        [SerializeField] private bool _loadSkillsOnInit = true;
+
+        // 스킬 시스템 데이터
+        private Dictionary<int, SkillData> _loadedSkills = new Dictionary<int, SkillData>();
+        private PlayerSkillInventory _playerSkillInventory;
 
         // 스킬 슬롯
         private ISkill _basicAttack;
@@ -38,8 +50,28 @@ namespace Metamorph.Managers
         public ISkill BasicAttack => _basicAttack;
         public ISkill GetSkill(int index) => (index >= 0 && index < _skills.Length) ? _skills[index] : null;
         public ISkill UltimateSkill => _ultimateSkill;
+        public string Name => "Skill Manager";
+
+        public InitializationPriority Priority { get; set; } = InitializationPriority.Normal;
+        public bool IsInitialized { get; private set; }
 
         #endregion
+
+        protected override void OnCreated()
+        {
+            base.OnCreated();
+
+            // Resources 폴더에서 SkillDatabase 로드 (Inspector에서 할당하지 않았을 경우)
+            if (_skillDatabase == null)
+            {
+                _skillDatabase = Resources.Load<SkillDatabase>("Databases/SkillDatabase");
+
+                if (_skillDatabase == null)
+                {
+                    JCDebug.Log("[SkillManager] SkillDatabase를 Resources/Databases/에서 찾을 수 없습니다.", JCDebug.LogLevel.Warning);
+                }
+            }
+        }
 
         #region Unity Lifecycle
 
@@ -408,7 +440,88 @@ namespace Metamorph.Managers
                      $"Skill 2: {_skills[1]?.SkillName ?? "None"} (CD: {_skills[1]?.GetCooldown():F1}s)\n" +
                      $"Ultimate: {_ultimateSkill?.SkillName ?? "None"} (CD: {_ultimateSkill?.GetCooldown():F1}s)");
         }
+        #endregion
+
+        #region IManagerInitializable 구현
+
+        public async UniTask InitializeAsync(CancellationToken cancellationToken = default)
+        {
+            if (IsInitialized) return;
+
+            JCDebug.Log("[SkillManager] 초기화 시작");
+
+            try
+            {
+                // 1. 스킬 데이터베이스 로드
+                await LoadSkillDatabaseAsync(cancellationToken);
+
+                // 2. 플레이어 스킬 인벤토리 초기화
+                await InitializePlayerSkillInventoryAsync(cancellationToken);
+
+                // 3. 스킬 시스템 이벤트 등록
+                RegisterSkillSystemEvents();
+
+                IsInitialized = true;
+                JCDebug.Log("[SkillManager] 초기화 완료");
+            }
+            catch (System.OperationCanceledException)
+            {
+                JCDebug.Log("[SkillManager] 초기화 취소됨");
+                throw;
+            }
+            catch (System.Exception ex)
+            {
+                JCDebug.Log($"[SkillManager] 초기화 실패: {ex.Message}", JCDebug.LogLevel.Error);
+                throw;
+            }
+        }
 
         #endregion
+
+        #region 초기화 단계별 메서드
+
+        private async UniTask LoadSkillDatabaseAsync(CancellationToken cancellationToken)
+        {
+            if (_skillDatabase == null)
+            {
+                throw new System.Exception("SkillDatabase가 할당되지 않았습니다.");
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            foreach (var skillData in _skillDatabase.Skills)
+            {
+                _loadedSkills[skillData.skillID] = skillData;
+            }
+
+            await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+
+            JCDebug.Log($"[SkillManager] {_loadedSkills.Count}개 스킬 로드 완료");
+        }
+
+        private async UniTask InitializePlayerSkillInventoryAsync(CancellationToken cancellationToken)
+        {
+            // 플레이어 스킬 인벤토리 생성 및 초기화
+            GameObject inventoryObject = new GameObject("PlayerSkillInventory");
+            inventoryObject.transform.SetParent(transform);
+
+            _playerSkillInventory = inventoryObject.AddComponent<PlayerSkillInventory>();
+
+            // 비동기로 초기화
+            await _playerSkillInventory.InitializeAsync(cancellationToken);
+
+            JCDebug.Log("[SkillManager] 플레이어 스킬 인벤토리 초기화 완료");
+        }
+
+        private void RegisterSkillSystemEvents()
+        {
+            // 게임 이벤트 시스템에 스킬 관련 이벤트 등록
+            // 예: 레벨업, 스킬 획득, 스킬 사용 등
+            JCDebug.Log("[SkillManager] 스킬 시스템 이벤트 등록 완료");
+        }
+
+        #endregion
+
+        
     }
 }

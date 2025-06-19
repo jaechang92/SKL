@@ -1,13 +1,17 @@
 // ============= LevelManager.cs =============
-using UnityEngine;
-using System.Collections;
 using CustomDebug;
+using Cysharp.Threading.Tasks;
+using Metamorph.Initialization;
+using System;
+using System.Collections;
+using System.Threading;
+using UnityEngine;
 
 /// <summary>
 /// 게임 전체를 관리하는 매니저 클래스
 /// 의존성: CameraController, Player, PortalManager
 /// </summary>
-public class LevelManager : SingletonManager<LevelManager>
+public class LevelManager : SingletonManager<LevelManager>, IInitializableAsync
 {
     [Header("Game References")]
     [SerializeField] private Transform player;
@@ -22,6 +26,11 @@ public class LevelManager : SingletonManager<LevelManager>
     public bool IsGameInitialized { get; private set; } = false;
     public Transform Player => player;
 
+    public string Name => "Level Manager";
+
+    public InitializationPriority Priority { get; set; } = InitializationPriority.Normal;
+
+    public bool IsInitialized { get; private set; }
 
     void Start()
     {
@@ -180,4 +189,19 @@ public class LevelManager : SingletonManager<LevelManager>
                      $"Camera: {(cameraController != null ? "OK" : "Missing")}");
     }
 
+    public void StartGame()
+    {
+        if (!IsGameInitialized)
+        {
+            JCDebug.Log("LevelManager: Cannot start game - not initialized!", JCDebug.LogLevel.Error);
+            return;
+        }
+        // 게임 시작 로직 추가
+        JCDebug.Log("LevelManager: Game started successfully!");
+    }
+
+    public UniTask InitializeAsync(CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -1,15 +1,18 @@
 using CustomDebug;
+using Cysharp.Threading.Tasks;
 using Metamorph.Forms.Base;
 using Metamorph.Forms.Data;
+using Metamorph.Initialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 namespace Metamorph.Managers
 {
     // 형태 관리자 - 싱글톤 패턴 적용
-    public class FormManager : SingletonManager<FormManager>
+    public class FormManager : SingletonManager<FormManager>, IInitializableAsync
     {
         [SerializeField] private FormDatabase _formDatabase;
         // 현재 장착된 형태들
@@ -28,6 +31,12 @@ namespace Metamorph.Managers
 
         [Header("Debug")]
         [SerializeField] private bool _showDebugInfo = false;
+
+        public string Name => "Form Manager";
+
+        public InitializationPriority Priority { get; set; } = InitializationPriority.Normal;
+
+        public bool IsInitialized { get; private set; }
 
         protected override void OnCreated()
         {
@@ -273,6 +282,9 @@ namespace Metamorph.Managers
             OnFormChanged = null;
         }
 
-
+        public UniTask InitializeAsync(CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

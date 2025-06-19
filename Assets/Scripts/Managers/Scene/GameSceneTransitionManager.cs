@@ -1,4 +1,5 @@
 // ====== 10. 게임 씬 전환 준비 매니저 ======
+using Metamorph.Data;
 using Metamorph.Managers;
 using UnityEngine;
 

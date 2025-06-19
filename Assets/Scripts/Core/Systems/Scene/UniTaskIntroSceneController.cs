@@ -53,6 +53,7 @@ namespace Metamorph.UI
 
         private void Start()
         {
+            DontDestroyOnLoad(gameObject);
             InitializeComponents();
             StartInitializationProcess().Forget();
         }

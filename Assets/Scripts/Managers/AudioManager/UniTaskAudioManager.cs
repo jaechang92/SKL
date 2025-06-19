@@ -13,7 +13,10 @@ namespace Metamorph.Managers
     public class UniTaskAudioManager : SingletonManager<UniTaskAudioManager>, IInitializableAsync
     {
         public string Name => "Audio Manager";
-        public InitializationPriority Priority => InitializationPriority.Normal;
+
+        public InitializationPriority Priority { get; set; } = InitializationPriority.Normal;
+
+
         public bool IsInitialized { get; private set; }
 
         [Header("Audio Sources")]
@@ -372,6 +375,7 @@ namespace Metamorph.Managers
         public bool IsMusicPlaying => musicSource != null && musicSource.isPlaying;
         public bool IsMusicFading => isMusicFading;
         public AudioClip CurrentMusic => currentMusicClip;
+
 
         #endregion
     }

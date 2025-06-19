@@ -12,7 +12,7 @@ namespace Metamorph.Initialization
     /// 기존 GameInitializerManager를 대체하는 통합 초기화 설정 클래스
     /// 이 클래스는 모든 UniTask 기반 매니저들을 등록하고 초기화합니다.
     /// </summary>
-    public class GameSystemInitializer : MonoBehaviour
+    public class GameSystemInitializer : SingletonManager<GameSystemInitializer>
     {
         [Header("Initialization Configuration")]
         [SerializeField] private bool _autoInitializeOnStart = true;

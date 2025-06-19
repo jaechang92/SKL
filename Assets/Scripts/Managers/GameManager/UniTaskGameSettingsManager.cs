@@ -22,7 +22,7 @@ namespace Metamorph.Managers
         public int qualityLevel = 2;
         public float brightness = 1.0f;
 
-        // 스컬 게임 특화 설정
+        // 게임 특화 설정
         public bool showDamageNumbers = true;
         public bool enableScreenShake = true;
         public float gameSpeed = 1.0f;
@@ -48,7 +48,10 @@ namespace Metamorph.Managers
     public class UniTaskGameSettingsManager : SingletonManager<UniTaskGameSettingsManager>, IInitializableAsync
     {
         public string Name => "Game Settings Manager";
-        public InitializationPriority Priority => InitializationPriority.High;
+
+        public InitializationPriority Priority { get; set; } = InitializationPriority.High;
+
+
         public bool IsInitialized { get; private set; }
 
         private GameSettings currentSettings;

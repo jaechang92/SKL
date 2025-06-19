@@ -14,7 +14,10 @@ namespace Metamorph.Managers
     public class UniTaskSceneTransitionManager : SingletonManager<UniTaskSceneTransitionManager>, IInitializableAsync
     {
         public string Name => "Scene Transition Manager";
-        public InitializationPriority Priority => InitializationPriority.Low;
+
+        public InitializationPriority Priority { get; set; } = InitializationPriority.Low;
+
+
         public bool IsInitialized { get; private set; }
 
         [Header("Transition Configuration")]

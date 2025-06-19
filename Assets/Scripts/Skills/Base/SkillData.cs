@@ -5,6 +5,7 @@ using UnityEngine;
 public class SkillData : ScriptableObject
 {
     public string skillName;
+    public int skillID;
     public Sprite skillIcon;
     public float cooldown;
     public float damage;

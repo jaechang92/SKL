@@ -16,7 +16,10 @@ namespace Metamorph.Initialization
     public class UniTaskGameManagerInitializer : MonoBehaviour, IInitializableAsync
     {
         public string Name => "Game Managers";
-        public InitializationPriority Priority => InitializationPriority.Critical;
+
+        public InitializationPriority Priority { get; set; } = InitializationPriority.Critical;
+
+
         public bool IsInitialized { get; private set; }
 
         [Header("Manager Configuration")]
@@ -160,7 +163,10 @@ namespace Metamorph.Initialization
     public class UniTaskSaveDataInitializer : MonoBehaviour, IInitializableAsync
     {
         public string Name => "Save Data";
-        public InitializationPriority Priority => InitializationPriority.High;
+
+        public InitializationPriority Priority { get; set; } = InitializationPriority.High;
+
+
         public bool IsInitialized { get; private set; }
 
         [Header("Save Data Configuration")]
@@ -222,7 +228,8 @@ namespace Metamorph.Initialization
     public class UniTaskGameSettingsInitializer : MonoBehaviour, IInitializableAsync
     {
         public string Name => "Game Settings";
-        public InitializationPriority Priority => InitializationPriority.High;
+        public InitializationPriority Priority { get; set; } = InitializationPriority.High;
+
         public bool IsInitialized { get; private set; }
 
         [Header("Settings Configuration")]
@@ -283,7 +290,8 @@ namespace Metamorph.Initialization
     public class UniTaskResourcePreloader : MonoBehaviour, IInitializableAsync
     {
         public string Name => "Essential Resources";
-        public InitializationPriority Priority => InitializationPriority.Normal;
+        public InitializationPriority Priority { get; set; } = InitializationPriority.Normal;
+
         public bool IsInitialized { get; private set; }
 
         [Header("Preload Configuration")]
@@ -397,7 +405,9 @@ namespace Metamorph.Initialization
     public class UniTaskNetworkInitializer : MonoBehaviour, IInitializableAsync
     {
         public string Name => "Network Connection";
-        public InitializationPriority Priority => InitializationPriority.Low;
+
+        public InitializationPriority Priority { get; set; } = InitializationPriority.Low;
+
         public bool IsInitialized { get; private set; }
 
         [Header("Network Configuration")]

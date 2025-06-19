@@ -13,7 +13,7 @@
 //    public List<ItemData> inventory;
 //    public long lastPlayTime;
 
-//    // 스컬 게임 특화 데이터
+//    // 게임 특화 데이터
 //    public int highestFloorReached;
 //    public List<string> unlockedSkills;
 //    public Dictionary<string, int> itemCollectionCount;

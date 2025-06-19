@@ -14,7 +14,9 @@ namespace Metamorph.Managers
     public class UniTaskResourceManager : SingletonManager<UniTaskResourceManager>, IInitializableAsync
     {
         public string Name => "Resource Manager";
-        public InitializationPriority Priority => InitializationPriority.Normal;
+
+        public InitializationPriority Priority { get; set; } = InitializationPriority.Normal;
+
         public bool IsInitialized { get; private set; }
 
         [Header("Resource Configuration")]

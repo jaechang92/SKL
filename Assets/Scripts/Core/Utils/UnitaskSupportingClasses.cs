@@ -195,7 +195,10 @@ namespace Metamorph.UI
     public class CustomUniTaskInitializer : MonoBehaviour, IInitializableAsync
     {
         public string Name => "Custom Initializer";
-        public InitializationPriority Priority => InitializationPriority.Low;
+
+        public InitializationPriority Priority { get; set; } = InitializationPriority.Low;
+
+
         public bool IsInitialized { get; private set; }
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken = default)

@@ -11,7 +11,7 @@ namespace Metamorph.Initialization
     public interface IInitializableAsync
     {
         string Name { get; }
-        InitializationPriority Priority { get; }
+        InitializationPriority Priority { get; set; }
         UniTask InitializeAsync(CancellationToken cancellationToken = default);
         bool IsInitialized { get; }
     }

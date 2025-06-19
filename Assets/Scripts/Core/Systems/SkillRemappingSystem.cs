@@ -1,16 +1,19 @@
+using CustomDebug;
+using Cysharp.Threading.Tasks;
+using Metamorph.Forms.Base;
+using Metamorph.Initialization;
+using Metamorph.Managers;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using System.Collections.Generic;
-using System;
-using Metamorph.Forms.Base;
-using Metamorph.Managers;
-using CustomDebug;
 
 /// <summary>
 /// 스킬 키 리매핑 및 슬롯 관리 시스템
 /// FormManager와 SkillManager와 연동하여 동적 스킬 관리 제공
 /// </summary>
-public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
+public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>, IInitializableAsync
 {
     [Header("Input System")]
     [SerializeField] private PlayerInputActions inputActions;
@@ -39,6 +42,12 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
     // 현재 폼과 스킬 정보 캐시
     private FormData currentForm;
     private Dictionary<string, SkillSlotConfig[]> formSkillPresets = new Dictionary<string, SkillSlotConfig[]>();
+
+    public string Name => "Skill Remapping System";
+
+    public InitializationPriority Priority { get; set; } = InitializationPriority.Normal;
+
+    public bool IsInitialized { get; private set; }
 
     // 이벤트 시스템
     public static event Action<int, SkillData> OnSkillUsed;           // 슬롯, 스킬데이터
@@ -656,4 +665,9 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>
     // 키 리매핑 관련 메서드들은 필요시 구현
     public void StartKeyRemapping(int slotIndex) { /* 구현 필요 */ }
     public void CancelRemapping() { /* 구현 필요 */ }
+
+    public UniTask InitializeAsync(CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

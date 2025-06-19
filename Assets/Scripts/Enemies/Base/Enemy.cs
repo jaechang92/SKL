@@ -1,5 +1,6 @@
 using Metamorph.Forms.Base;
 using Metamorph.Forms.Data;
+using Metamorph.Managers;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,6 +8,22 @@ using UnityEngine;
 // 적 기본 클래스 (형태 시스템과 연결을 위한 참조)
 public class Enemy : MonoBehaviour
 {
+    [Header("Enemy Config")]
+    public EnemyType enemyType;
+
+    public bool IsAlive { get; private set; } = true;
+    private Room currentRoom;
+
+    public void Initialize(EnemyManager manager) { }
+    public void Spawn(Vector3 position) { IsAlive = true; }
+    public void ResetForPool() { IsAlive = false; }
+    public void UpdateAI() { /* AI 로직 */ }
+    public void SetLODLevel(EnemyLODLevel level) { /* LOD 처리 */ }
+    public void OnPlayerFormChanged(FormData newForm) { /* 형태 반응 */ }
+    public void OnPlayerSkillUsed(SkillData skillData) { /* 스킬 반응 */ }
+    public void SetCurrentRoom(Room room) { currentRoom = room; }
+    public Room GetCurrentRoom() { return currentRoom; }
+
     // 적 기본 속성
     public float maxHealth;
     public float currentHealth;
@@ -118,10 +135,12 @@ public class Enemy : MonoBehaviour
         // 보상 드롭, 경험치 지급 등
 
         // 확률적으로 형태 드롭
-        if (UnityEngine.Random.value < 0.1f) // 10% 확률
+        if (Random.value < 0.1f) // 10% 확률
         {
             DropForm();
         }
+
+        IsAlive = false;
 
         // 오브젝트 제거
         Destroy(gameObject);

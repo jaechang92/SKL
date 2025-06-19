@@ -6,51 +6,20 @@ using UnityEngine;
 using Cysharp.Threading.Tasks;
 using Metamorph.Initialization;
 using CustomDebug;
+using Metamorph.Data;
 
 namespace Metamorph.Managers
 {
-    [System.Serializable]
-    public class PlayerData
-    {
-        public string playerName = "New Player";
-        public int level = 1;
-        public int experience = 0;
-        public int gold = 100;
-        public int currentStageIndex = 0;
-        public List<int> unlockedStages = new List<int> { 0 };
-        public List<ItemData> inventory = new List<ItemData>();
-        public long lastPlayTime;
-        public float totalPlayTime = 0f;
-
-        // 스컬 게임 특화 데이터
-        public int highScore = 0;
-        public int totalDeaths = 0;
-        public int totalKills = 0;
-        public Dictionary<string, bool> achievements = new Dictionary<string, bool>();
-        public Dictionary<string, int> statistics = new Dictionary<string, int>();
-    }
-
-    [System.Serializable]
-    public class ItemData
-    {
-        public string itemId;
-        public int quantity;
-        public Dictionary<string, object> properties = new Dictionary<string, object>();
-
-        public ItemData(string id, int qty)
-        {
-            itemId = id;
-            quantity = qty;
-        }
-    }
-
     /// <summary>
     /// UniTask 기반 세이브 데이터 매니저 (싱글톤)
     /// </summary>
     public class UniTaskSaveDataManager : SingletonManager<UniTaskSaveDataManager>, IInitializableAsync
     {
         public string Name => "Save Data Manager";
-        public InitializationPriority Priority => InitializationPriority.Critical;
+
+        public InitializationPriority Priority { get; set; } = InitializationPriority.Critical;
+
+
         public bool IsInitialized { get; private set; }
 
         private PlayerData currentPlayerData;

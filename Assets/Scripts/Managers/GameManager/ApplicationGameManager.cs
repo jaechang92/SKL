@@ -1,13 +1,22 @@
 // ====== 11. 게임 매니저 (MVP 패턴의 Model) ======
+using Cysharp.Threading.Tasks;
+using Metamorph.Data;
+using Metamorph.Initialization;
 using Metamorph.Managers;
 using System;
 using System.Collections;
+using System.Threading;
 using UnityEngine;
 
-public class ApplicationGameManager : SingletonManager<ApplicationGameManager>
+public class ApplicationGameManager : SingletonManager<ApplicationGameManager>, IInitializableAsync
 {
     [Header("Game State")]
     public GameState currentGameState;
+    public string Name => "Application Game Manager";
+
+    public InitializationPriority Priority { get; set; } = InitializationPriority.Normal;
+
+    public bool IsInitialized { get; private set; }
 
     public event Action<GameState> OnGameStateChanged;
 
@@ -65,6 +74,11 @@ public class ApplicationGameManager : SingletonManager<ApplicationGameManager>
             OnGameStateChanged?.Invoke(newState);
             Debug.Log($"Game state changed from {previousState} to {newState}");
         }
+    }
+
+    public UniTask InitializeAsync(CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }
 
