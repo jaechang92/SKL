@@ -49,7 +49,7 @@ namespace Metamorph.Managers
     {
         public string Name => "Game Settings Manager";
 
-        public InitializationPriority Priority { get; set; } = InitializationPriority.High;
+        public InitializationPriority Priority { get; set; } = InitializationPriority.Gameplay;
 
 
         public bool IsInitialized { get; private set; }
@@ -411,6 +411,11 @@ namespace Metamorph.Managers
             currentSettings.resolution.x = width;
             currentSettings.resolution.y = height;
             currentSettings.fullscreen = fullscreen;
+        }
+
+        public UniTask CleanupAsync()
+        {
+            throw new NotImplementedException();
         }
     }
 }

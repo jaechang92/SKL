@@ -333,6 +333,11 @@ namespace Metamorph.Managers
             _ambientSource.volume = targetVolume;
         }
 
+        public UniTask CleanupAsync()
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
 
         #region 프로퍼티

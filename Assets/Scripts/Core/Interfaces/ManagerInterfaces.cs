@@ -1,7 +1,6 @@
 // Assets/Scripts/Core/Interfaces/ManagerInterfaces.cs
 using Cysharp.Threading.Tasks;
-using Metamorph.Data;
-using Metamorph.Initialization;
+using PlayerData;
 using System;
 using System.Threading;
 
@@ -29,28 +28,28 @@ namespace Metamorph.Core.Interfaces
     // ==================================================
     public interface IDataManager
     {
-        PlayerData PlayerData { get; }
+        PlayerGameData PlayerData { get; }
         bool IsDirty { get; }
 
-        event Action<PlayerData> OnDataChanged;
+        event Action<PlayerGameData> OnDataChanged;
         event Action<string> OnDataError;
 
-        void SetPlayerData(PlayerData data);
+        void SetPlayerData(PlayerGameData data);
         void MarkDirty();
         void ResetDirtyFlag();
-        PlayerData CreateDefaultData();
-        bool ValidateData(PlayerData data);
+        PlayerGameData CreateDefaultData();
+        bool ValidateData(PlayerGameData data);
     }
 
     public interface ISaveManager
     {
-        event Action<PlayerData> OnDataSaved;
-        event Action<PlayerData> OnDataLoaded;
+        event Action<PlayerGameData> OnDataSaved;
+        event Action<PlayerGameData> OnDataLoaded;
         event Action<string> OnSaveError;
         event Action OnAutoSaveTriggered;
 
-        UniTask<PlayerData> LoadDataAsync(CancellationToken cancellationToken = default);
-        UniTask SaveDataAsync(PlayerData data, CancellationToken cancellationToken = default);
+        UniTask<PlayerGameData> LoadDataAsync(CancellationToken cancellationToken = default);
+        UniTask SaveDataAsync(PlayerGameData data, CancellationToken cancellationToken = default);
         void StartAutoSave(IDataManager dataManager);
         void StopAutoSave();
     }

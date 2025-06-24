@@ -11,9 +11,11 @@ namespace Metamorph.Initialization
     public interface IInitializableAsync
     {
         string Name { get; }
-        InitializationPriority Priority { get; set; }
+        InitializationPriority Priority { get; }
         UniTask InitializeAsync(CancellationToken cancellationToken = default);
         bool IsInitialized { get; }
+
+        UniTask CleanupAsync();
     }
 
     /// <summary>
@@ -21,10 +23,14 @@ namespace Metamorph.Initialization
     /// </summary>
     public enum InitializationPriority
     {
-        Critical = 0,    // 핵심 시스템 (먼저 초기화)
-        High = 1,        // 중요 시스템
-        Normal = 2,      // 일반 시스템
-        Low = 3          // 보조 시스템 (나중에 초기화)
+        Critical = 0,    // 핵심 시스템 (Resource 등)
+        Core = 100,      // 코어 시스템 (Input, Scene 등)
+        Gameplay = 200,  // 게임플레이 (Player, Form, Skill 등)
+        Normal = 300, // 일반 시스템 (Enemy, Item 등)
+        UI = 400,        // UI 시스템
+        Audio = 500,     // 오디오 시스템
+        Analytics = 600, // 분석 및 기타
+        Low = 900       // 가장 늦게 초기화
     }
 
     /// <summary>
