@@ -85,14 +85,17 @@ public class UnifiedGameManager : SingletonManager<UnifiedGameManager>
 
     public void RegisterAllManager()
     {
+        CreateAndRegisterManager<IntroManager>(InitializationPriority.Critical);
         CreateAndRegisterManager<PlayerDataManager>(InitializationPriority.Core);
+        CreateAndRegisterManager<SaveManager>(InitializationPriority.Gameplay);
+        CreateAndRegisterManager<LoadManager>(InitializationPriority.Gameplay);
+
         //CreateAndRegisterManager<GameSceneTransitionManager>(InitializationPriority.Core);
 
         //CreateAndRegisterManager<GameSettingsManager>(InitializationPriority.Gameplay);
-        //CreateAndRegisterManager<GameResourceManager>(InitializationPriority.Gameplay);
-        //CreateAndRegisterManager<SkillManager>(InitializationPriority.Gameplay);
-        //CreateAndRegisterManager<SaveManager>(InitializationPriority.Gameplay);
-        //CreateAndRegisterManager<LoadManager>(InitializationPriority.Gameplay);
+        CreateAndRegisterManager<GameResourceManager>(InitializationPriority.Gameplay);
+        CreateAndRegisterManager<SkillManager>(InitializationPriority.Gameplay);
+        CreateAndRegisterManager<FormManager>(InitializationPriority.Gameplay);
 
         CreateAndRegisterManager<AudioManager>(InitializationPriority.Audio);
         CreateAndRegisterManager<MusicManager>(InitializationPriority.Audio);
@@ -435,7 +438,18 @@ public class UnifiedGameManager : SingletonManager<UnifiedGameManager>
             }
         }
 
-        // 이름순으로 정렬
-        _managersList.Sort((a, b) => string.Compare(a.managerName, b.managerName));
+        // Priority별로 정렬후 이름순으로 정렬
+        _managersList.Sort((a, b) => 
+        {
+            InitializationPriority aPriority = _managerPriorities[a.managerReference.GetType()];
+            InitializationPriority bPriority = _managerPriorities[b.managerReference.GetType()];
+            
+            // Priority 비교
+            int priorityComparison = aPriority.CompareTo(bPriority);
+            if (priorityComparison != 0)
+                return priorityComparison;
+            // 이름 비교
+            return string.Compare(a.managerName, b.managerName);
+        });
     }
 }

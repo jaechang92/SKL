@@ -65,7 +65,7 @@ namespace Metamorph.Managers
                 InitializeMusicSettings();
 
                 IsInitialized = true;
-                JCDebug.Log("[MusicManager] 음악 시스템 초기화 완료");
+                JCDebug.Log("[MusicManager] 음악 시스템 초기화 완료", JCDebug.LogLevel.Success);
             }
             catch (OperationCanceledException)
             {
@@ -428,9 +428,68 @@ namespace Metamorph.Managers
             // 긴장감 있는 전투 음악으로 크로스페이드
         }
 
-        public UniTask CleanupAsync()
+        public async UniTask CleanupAsync()
         {
-            throw new NotImplementedException();
+            JCDebug.Log("[MusicManager] 정리 시작");
+
+            try
+            {
+                // 1. 진행 중인 음악 페이드/크로스페이드 정리
+                if (_isMusicFading || _isCrossfading)
+                {
+                    JCDebug.Log("[MusicManager] 진행 중인 페이드 작업 대기 중...");
+
+                    // 최대 3초까지 대기
+                    int waitCount = 0;
+                    while ((_isMusicFading || _isCrossfading) && waitCount < 30)
+                    {
+                        await UniTask.Delay(100);
+                        waitCount++;
+                    }
+
+                    if (_isMusicFading || _isCrossfading)
+                    {
+                        JCDebug.Log("[MusicManager] 페이드 작업 강제 종료", JCDebug.LogLevel.Warning);
+                        _isMusicFading = false;
+                        _isCrossfading = false;
+                    }
+                }
+
+                // 2. 모든 음악 소스 정지
+                if (_musicSource != null)
+                {
+                    _musicSource.Stop();
+                    _musicSource.clip = null;
+                }
+
+                if (_crossfadeSource != null)
+                {
+                    _crossfadeSource.Stop();
+                    _crossfadeSource.clip = null;
+                }
+
+                // 3. 코루틴 정리
+                StopAllCoroutines();
+
+                // 4. AudioManager와의 이벤트 연결 해제
+                // (AudioManager의 정리에서 이미 처리되므로 중복 해제 방지)
+
+                // 5. 상태 초기화
+                _currentMusicClip = null;
+                _musicVolume = 1.0f;
+                _masterVolume = 1.0f;
+                _isMusicFading = false;
+                _isCrossfading = false;
+
+                // 6. 작업 완료 대기
+                await UniTask.Delay(50);
+
+                JCDebug.Log("[MusicManager] 정리 완료");
+            }
+            catch (Exception ex)
+            {
+                JCDebug.Log($"[MusicManager] 정리 중 오류: {ex.Message}", JCDebug.LogLevel.Error);
+            }
         }
 
         #endregion

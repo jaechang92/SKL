@@ -65,7 +65,7 @@ namespace Metamorph.Managers
                 SetupMusicManagerIntegration();
 
                 IsInitialized = true;
-                JCDebug.Log("[AudioManager] 오디오 시스템 초기화 완료");
+                JCDebug.Log("[AudioManager] 오디오 시스템 초기화 완료", JCDebug.LogLevel.Success);
             }
             catch (OperationCanceledException)
             {
@@ -333,9 +333,58 @@ namespace Metamorph.Managers
             _ambientSource.volume = targetVolume;
         }
 
-        public UniTask CleanupAsync()
+        public async UniTask CleanupAsync()
         {
-            throw new NotImplementedException();
+            JCDebug.Log("[AudioManager] 정리 시작");
+
+            try
+            {
+                // 1. 모든 오디오 소스 정지
+                if (_sfxSource != null)
+                {
+                    _sfxSource.Stop();
+                }
+
+                if (_ambientSource != null)
+                {
+                    _ambientSource.Stop();
+                }
+
+                // 2. SFX 풀의 모든 AudioSource 정리
+                if (_sfxPool != null)
+                {
+                    foreach (var poolSource in _sfxPool)
+                    {
+                        if (poolSource != null)
+                        {
+                            poolSource.Stop();
+                        }
+                    }
+                }
+
+                // 3. MusicManager와의 이벤트 연결 해제
+                if (_musicManager != null)
+                {
+                    OnMasterVolumeChanged -= _musicManager.OnMasterVolumeUpdated;
+                }
+
+                // 4. 진행 중인 페이드 작업 정리 (Ambient 페이드 등)
+                StopAllCoroutines();
+
+                // 5. 상태 초기화
+                _masterVolume = 1.0f;
+                _sfxVolume = 1.0f;
+                _ambientVolume = 0.5f;
+
+                // 6. 작업 완료 대기 (필요시)
+                await UniTask.Delay(50); // 정리 작업 완료 대기
+
+                JCDebug.Log("[AudioManager] 정리 완료");
+            }
+            catch (Exception ex)
+            {
+                JCDebug.Log($"[AudioManager] 정리 중 오류: {ex.Message}", JCDebug.LogLevel.Error);
+            }
         }
 
         #endregion

@@ -271,7 +271,7 @@
             "id": "67b06eb8-b346-453c-aa53-0285ed6bdb89",
             "actions": [
                 {
-                    "name": "New action",
+                    "name": "AnyKey",
                     "type": "Button",
                     "id": "4cd01967-a9ae-4132-816a-411b381eca44",
                     "expectedControlType": "",
@@ -284,11 +284,22 @@
                 {
                     "name": "",
                     "id": "673c6684-0092-4c3d-ad6c-62263ebeeb66",
-                    "path": "",
+                    "path": "<Keyboard>/anyKey",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "New action",
+                    "action": "AnyKey",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "257744e5-bf70-40fd-b786-bb5fb6192e0d",
+                    "path": "<Mouse>/press",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "AnyKey",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
