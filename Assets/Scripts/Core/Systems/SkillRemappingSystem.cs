@@ -668,6 +668,16 @@ public class SkillRemappingSystem : SingletonManager<SkillRemappingSystem>, IIni
 
     public UniTask InitializeAsync(CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        JCDebug.Log($"🔄 {Name} 초기화 시작...");
+        // 초기화 로직
+        InitializeInputActions();
+        InitializeSlots();
+        SetupInputActions();
+        RegisterFormManagerEvents();
+        // 현재 폼 정보 업데이트
+        UpdateCurrentForm();
+        IsInitialized = true;
+        JCDebug.Log($"✅ {Name} 초기화 완료!");
+        return UniTask.CompletedTask;
     }
 }

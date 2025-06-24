@@ -1,15 +1,16 @@
+using CustomDebug;
+using Cysharp.Threading.Tasks;
+using Metamorph.Core;
+using Metamorph.Core.Interfaces;
+using Metamorph.Initialization;
+using Metamorph.Managers;
 using System;
 using System.Threading;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
-using Cysharp.Threading.Tasks;
-using Metamorph.Initialization;
-using CustomDebug;
-using Metamorph.Core.Interfaces;
-using Metamorph.Managers;
-using TMPro;
+using UnityEngine.UI;
 
 namespace Metamorph.UI
 {
@@ -44,12 +45,12 @@ namespace Metamorph.UI
         private CancellationTokenSource _initializationCts;
 
         // 초기화 컴포넌트들
-        private UniTaskInitializationManager _initializationManager;
-        private UniTaskGameManagerInitializer _gameManagerInitializer;
-        private UniTaskSaveDataInitializer _saveDataInitializer;
-        private UniTaskGameSettingsInitializer _gameSettingsInitializer;
-        private UniTaskResourcePreloader _resourcePreloader;
-        private UniTaskNetworkInitializer _networkInitializer;
+        private UnifiedGameManager _initializationManager;
+        //private UniTaskGameManagerInitializer _gameManagerInitializer;
+        //private UniTaskSaveDataInitializer _saveDataInitializer;
+        //private UniTaskGameSettingsInitializer _gameSettingsInitializer;
+        //private UniTaskResourcePreloader _resourcePreloader;
+        //private UniTaskNetworkInitializer _networkInitializer;
 
         private void Start()
         {
@@ -85,11 +86,11 @@ namespace Metamorph.UI
         private void InitializeComponents()
         {
             // InitializationManager 가져오기
-            _initializationManager = UniTaskInitializationManager.Instance;
+            _initializationManager = UnifiedGameManager.Instance;
             _initializationManager.RegisterObserver(this);
 
             // 초기화 컴포넌트들 생성 및 등록
-            CreateAndRegisterInitializers();
+            //CreateAndRegisterInitializers();
 
             // UI 초기 상태 설정
             SetupInitialUI();
@@ -98,40 +99,40 @@ namespace Metamorph.UI
             SetupCancelButton();
         }
 
-        /// <summary>
-        /// 초기화 컴포넌트들을 생성하고 등록
-        /// </summary>
-        private void CreateAndRegisterInitializers()
-        {
-            // 게임 매니저 초기화기
-            _gameManagerInitializer = CreateInitializer<UniTaskGameManagerInitializer>("GameManagerInitializer");
+        ///// <summary>
+        ///// 초기화 컴포넌트들을 생성하고 등록
+        ///// </summary>
+        //private void CreateAndRegisterInitializers()
+        //{
+        //    // 게임 매니저 초기화기
+        //    _gameManagerInitializer = CreateInitializer<UniTaskGameManagerInitializer>("GameManagerInitializer");
 
-            // 세이브 데이터 초기화기
-            _saveDataInitializer = CreateInitializer<UniTaskSaveDataInitializer>("SaveDataInitializer");
+        //    // 세이브 데이터 초기화기
+        //    _saveDataInitializer = CreateInitializer<UniTaskSaveDataInitializer>("SaveDataInitializer");
 
-            // 게임 설정 초기화기
-            _gameSettingsInitializer = CreateInitializer<UniTaskGameSettingsInitializer>("GameSettingsInitializer");
+        //    // 게임 설정 초기화기
+        //    _gameSettingsInitializer = CreateInitializer<UniTaskGameSettingsInitializer>("GameSettingsInitializer");
 
-            // 리소스 프리로더
-            _resourcePreloader = CreateInitializer<UniTaskResourcePreloader>("ResourcePreloader");
+        //    // 리소스 프리로더
+        //    _resourcePreloader = CreateInitializer<UniTaskResourcePreloader>("ResourcePreloader");
 
-            // 네트워크 초기화기
-            _networkInitializer = CreateInitializer<UniTaskNetworkInitializer>("NetworkInitializer");
+        //    // 네트워크 초기화기
+        //    _networkInitializer = CreateInitializer<UniTaskNetworkInitializer>("NetworkInitializer");
 
-            JCDebug.Log("[UniTaskIntroController] 모든 초기화 컴포넌트 등록 완료");
-        }
+        //    JCDebug.Log("[UniTaskIntroController] 모든 초기화 컴포넌트 등록 완료");
+        //}
 
-        /// <summary>
-        /// 초기화 컴포넌트 생성 헬퍼 메서드
-        /// </summary>
-        private T CreateInitializer<T>(string objectName) where T : MonoBehaviour, IInitializableAsync
-        {
-            GameObject initializerObj = new GameObject(objectName);
-            initializerObj.transform.SetParent(transform);
-            T initializer = initializerObj.AddComponent<T>();
-            _initializationManager.RegisterInitializable(initializer);
-            return initializer;
-        }
+        ///// <summary>
+        ///// 초기화 컴포넌트 생성 헬퍼 메서드
+        ///// </summary>
+        //private T CreateInitializer<T>(string objectName) where T : MonoBehaviour, IInitializableAsync
+        //{
+        //    GameObject initializerObj = new GameObject(objectName);
+        //    initializerObj.transform.SetParent(transform);
+        //    T initializer = initializerObj.AddComponent<T>();
+        //    _initializationManager.RegisterManager(initializer);
+        //    return initializer;
+        //}
 
         /// <summary>
         /// UI 초기 상태 설정
@@ -183,7 +184,7 @@ namespace Metamorph.UI
                 JCDebug.Log("[UniTaskIntroController] 초기화 프로세스 시작");
 
                 // InitializationManager를 통한 초기화 실행
-                await _initializationManager.InitializeAllAsync(_initializationCts.Token);
+                //await _initializationManager.InitializeAllAsync(_initializationCts.Token);
 
                 // 최소 로딩 시간 보장
                 await EnsureMinimumLoadingTimeAsync(_initializationCts.Token);

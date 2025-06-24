@@ -94,6 +94,23 @@ namespace Metamorph.Player.Components.Animation
         private void OnDestroy()
         {
             UnsubscribeFromEvents();
+
+            // 동적 생성된 오브젝트 정리
+            if (_particleSpawnPoint != null && _particleSpawnPoint.gameObject.hideFlags == HideFlags.DontSave)
+            {
+                if (Application.isPlaying)
+                {
+                    Destroy(_particleSpawnPoint.gameObject);
+                }
+                else
+                {
+                    DestroyImmediate(_particleSpawnPoint.gameObject);
+                }
+            }
+
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+#endif
         }
 
         #endregion
@@ -139,11 +156,38 @@ namespace Metamorph.Player.Components.Animation
             if (_particleSpawnPoint == null)
             {
                 GameObject spawnPoint = new GameObject("ParticleSpawnPoint");
+
+                // 핵심: HideFlags 설정으로 에디터 저장 방지
+                spawnPoint.hideFlags = HideFlags.DontSave;
+
                 spawnPoint.transform.SetParent(transform);
                 spawnPoint.transform.localPosition = new Vector3(0, -0.5f, 0);
                 _particleSpawnPoint = spawnPoint.transform;
             }
+
+            // 에디터 전용 정리
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                UnityEditor.EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+            }
+#endif
+
         }
+
+#if UNITY_EDITOR
+        private void OnPlayModeStateChanged(UnityEditor.PlayModeStateChange state)
+        {
+            if (state == UnityEditor.PlayModeStateChange.ExitingPlayMode)
+            {
+                // 플레이 모드 종료 시 임시 오브젝트 정리
+                if (_particleSpawnPoint != null && _particleSpawnPoint.gameObject.hideFlags == HideFlags.DontSave)
+                {
+                    DestroyImmediate(_particleSpawnPoint.gameObject);
+                }
+            }
+        }
+#endif
 
         #endregion
 

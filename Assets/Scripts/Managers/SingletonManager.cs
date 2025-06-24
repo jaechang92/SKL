@@ -1,4 +1,5 @@
 using CustomDebug;
+using Metamorph.Core;
 using UnityEngine;
 
 /// <summary>
@@ -42,18 +43,19 @@ public abstract class SingletonManager<T> : MonoBehaviour where T : MonoBehaviou
                 // 2. 찾지 못했다면 새로 생성
                 if (_instance == null)
                 {
-                    // 매니저 초기화기 확인
-                    ManagerInitializer initializer = FindAnyObjectByType<ManagerInitializer>();
+                    // 매니저 초기화 확인
+                    UnifiedGameManager initializer = FindAnyObjectByType<UnifiedGameManager>();
 
-                    // 초기화기가 있으면 그것을 통해 생성 요청
+                    // 초기화가 있으면 그것을 통해 생성 요청
                     if (initializer != null && initializer.IsInitialized)
                     {
                         JCDebug.Log($"{typeof(T).Name} 매니저 요청됨 - ManagerInitializer를 통해 생성");
-                        _instance = initializer.GetManager(typeof(T)) as T;
+                        
+                        _instance = initializer.GetManager<T>();
                         return _instance;
                     }
 
-                    // 초기화기가 없거나 초기화되지 않았다면 직접 생성
+                    // 초기화가 없거나 초기화되지 않았다면 직접 생성
                     GameObject obj = new GameObject($"__{typeof(T).Name}");
                     _instance = obj.AddComponent<T>();
 

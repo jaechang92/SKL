@@ -1,16 +1,18 @@
 using CustomDebug;
 using Cysharp.Threading.Tasks;
-using Metamorph.Initialization;
 using Metamorph.Core.Interfaces;
+using Metamorph.Initialization;
 using Metamorph.Managers;
+using Metamorph.UI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Metamorph.UI;
 
 namespace Metamorph.Core
 {
@@ -28,7 +30,7 @@ namespace Metamorph.Core
         [Header("Scene Management")]
         [SerializeField] private string _gameSceneName = "Game";
         [SerializeField] private string _introSceneName = "Intro";
-
+        
         // 매니저 관리
         private Dictionary<Type, MonoBehaviour> _managers = new Dictionary<Type, MonoBehaviour>();
         private GameObject _managerParent;
@@ -132,91 +134,70 @@ namespace Metamorph.Core
             _logMessage("모든 매니저 등록 시작");
 
             // 1. 핵심 시스템 매니저들 (Critical 우선순위)
-            RegisterManager<SkillRemappingSystem>("Core", InitializationPriority.Critical);
-            RegisterManager<ApplicationGameManager>("Core", InitializationPriority.Critical);
-            RegisterManager<UniTaskSaveDataManager>("Core", InitializationPriority.Critical);
+            RegisterManager(SkillRemappingSystem.Instance, InitializationPriority.Critical);
+            //RegisterManager<ApplicationGameManager>("Core", InitializationPriority.Critical);
+            RegisterManager(UniTaskSaveManager.Instance, InitializationPriority.Critical);
+            RegisterManager(PlayerDataManager.Instance, InitializationPriority.Critical);
+
 
             // 2. 게임 설정 및 데이터 매니저들 (High 우선순위)  
-            RegisterManager<UniTaskGameSettingsManager>("Settings", InitializationPriority.High);
-            RegisterManager<PlayerDataManager>("Data", InitializationPriority.High);
+            RegisterManager(UniTaskGameSettingsManager.Instance, InitializationPriority.High);
+            RegisterManager(PlayerDataManager.Instance, InitializationPriority.High);
 
             // 3. 리소스 및 오디오 매니저들 (Normal 우선순위)
-            RegisterManager<UniTaskResourceManager>("Resource", InitializationPriority.Normal);
-            RegisterManager<AudioManager>("Audio", InitializationPriority.Normal);
-            RegisterManager<MusicManager>("Audio", InitializationPriority.Normal);
+            RegisterManager(UniTaskResourceManager.Instance, InitializationPriority.Normal);
+            RegisterManager(AudioManager.Instance, InitializationPriority.Normal);
+            RegisterManager(MusicManager.Instance, InitializationPriority.Normal);
 
             // 4. 게임플레이 매니저들 (Normal 우선순위)
-            RegisterManager<FormManager>("Gameplay", InitializationPriority.Normal);
-            RegisterManager<SkillManager>("Gameplay", InitializationPriority.Normal);
-            RegisterManager<LevelManager>("Gameplay", InitializationPriority.Normal);
-            RegisterManager<EnemyManager>("Gameplay", InitializationPriority.Normal);
+            RegisterManager(FormManager.Instance, InitializationPriority.Normal);
+            RegisterManager(SkillManager.Instance, InitializationPriority.Normal);
+            RegisterManager(LevelManager.Instance, InitializationPriority.Normal);
+            RegisterManager(EnemyManager.Instance, InitializationPriority.Normal);
 
             // 5. UI 매니저들 (Low 우선순위)
-            RegisterManager<UIManager>("UI", InitializationPriority.Low);
-            RegisterManager<PopupManager>("UI", InitializationPriority.Low);
+            RegisterManager(UIManager.Instance, InitializationPriority.Low);
+            RegisterManager(PopupManager.Instance, InitializationPriority.Low);
 
             // 6. 씬 전환 매니저 (Low 우선순위)
-            RegisterManager<UniTaskSceneTransitionManager>("Scene", InitializationPriority.Low);
+            RegisterManager(UniTaskSceneTransitionManager.Instance, InitializationPriority.Low);
 
             _logMessage($"총 {_initializables.Count}개 매니저 등록 완료");
         }
 
-        /// <summary>
-        /// 개별 매니저 등록 (제네릭 메서드)
-        /// </summary>
-        private void RegisterManager<T>(string category, InitializationPriority priority)
-            where T : MonoBehaviour, IInitializableAsync
+        private void RegisterManager<T>(T manager, InitializationPriority priority)
+    where T : MonoBehaviour, IInitializableAsync // 🔧 제약조건 추가
         {
+            // null 체크
+            if (manager == null)
+            {
+                _logError($"RegisterManager: {typeof(T).Name} manager가 null입니다.");
+                return;
+            }
+
+            // _managerParent null 체크
+            if (_managerParent == null)
+            {
+                _logError("RegisterManager: _managerParent가 초기화되지 않았습니다.");
+                return;
+            }
+
             try
             {
-                var manager = CreateOrGetManager<T>($"{typeof(T).Name}", category);
-                if (manager != null)
-                {
-                    manager.Priority = priority;
-                    _initializables.Add(manager);
-                    _managers[typeof(T)] = manager;
-                    _logMessage($"{typeof(T).Name} 등록됨 (우선순위: {priority})");
-                }
+                // 안전한 캐스팅 (제약조건으로 보장됨)
+                _managers[typeof(T)] = manager;
+                _initializables.Add(manager);
+
+                // Priority 설정 (리플렉션 대신 직접 접근)
+                manager.Priority = priority;
+
+                // 올바른 GameObject 접근
+                manager.gameObject.transform.SetParent(_managerParent.transform);
             }
             catch (Exception ex)
             {
                 _logError($"{typeof(T).Name} 등록 실패: {ex.Message}");
             }
-        }
-
-        /// <summary>
-        /// 매니저 생성 또는 기존 매니저 가져오기
-        /// </summary>
-        private T CreateOrGetManager<T>(string managerName, string category)
-            where T : MonoBehaviour, IInitializableAsync
-        {
-            // 이미 존재하는 매니저 찾기
-            T manager = FindAnyObjectByType<T>();
-
-            if (manager == null)
-            {
-                // 카테고리별 부모 오브젝트 생성 또는 찾기
-                GameObject categoryParent = GetOrCreateCategoryParent(category);
-
-                // 새 매니저 생성
-                GameObject managerObj = new GameObject(managerName);
-                managerObj.transform.SetParent(categoryParent.transform);
-
-                manager = managerObj.AddComponent<T>();
-                DontDestroyOnLoad(managerObj);
-
-                _logMessage($"{managerName} 새로 생성됨");
-            }
-            else
-            {
-                _logMessage($"{managerName} 기존 매니저 사용");
-
-                // 기존 매니저를 적절한 카테고리로 이동
-                GameObject categoryParent = GetOrCreateCategoryParent(category);
-                manager.transform.SetParent(categoryParent.transform);
-            }
-
-            return manager;
         }
 
         /// <summary>
@@ -479,6 +460,7 @@ namespace Metamorph.Core
 
             // LevelManager 등 게임플레이 관련 매니저들의 게임 시작 알림
             var levelManager = GetManager<LevelManager>();
+            LevelManager.Instance.StartGame();
             levelManager?.StartGame();
         }
 

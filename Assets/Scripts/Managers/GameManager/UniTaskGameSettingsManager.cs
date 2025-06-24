@@ -262,16 +262,25 @@ namespace Metamorph.Managers
 
         private async UniTask ApplyAudioSettingsAsync(CancellationToken cancellationToken)
         {
-            var audioManager = UniTaskAudioManager.Instance;
+            var audioManager = AudioManager.Instance;
             if (audioManager != null && audioManager.IsInitialized)
             {
                 audioManager.SetMasterVolume(currentSettings.masterVolume);
-                audioManager.SetMusicVolume(currentSettings.musicVolume);
                 audioManager.SetSFXVolume(currentSettings.sfxVolume);
                 audioManager.SetAmbientVolume(currentSettings.ambientVolume);
             }
+
+            var musicManager = MusicManager.Instance;
+
+            if (musicManager != null && musicManager.IsInitialized)
+            {
+                musicManager.SetMusicVolume(currentSettings.musicVolume);
+            }
+
             await UniTask.Yield(cancellationToken);
         }
+
+
 
         private async UniTask ApplyGraphicsSettingsAsync(CancellationToken cancellationToken)
         {

@@ -24,7 +24,7 @@ namespace Metamorph.Managers
         private Dictionary<string, FormData> _unlockedForms = new Dictionary<string, FormData>();
 
         // 형태 변경 이벤트 - 옵저버 패턴
-        public event Action<FormData> OnFormChanged;
+        public event Action<FormData> OnFormChanged = new Action<FormData>(form => { });
 
         // 플레이어 컴포넌트 참조
         private PlayerController _playerController;
@@ -45,7 +45,7 @@ namespace Metamorph.Managers
             _formDatabase = Resources.Load<FormDatabase>("Databases/FormDatabase");
             _currentForm = _formDatabase.GetDefaultForm(); // 기본 폼 설정
 
-            if (_formDatabase != null && _showDebugInfo)
+            if (_formDatabase != null)
             {
                 JCDebug.Log("FormDatabase 성공적으로 로드됨");
                 InitializeDefaultForms();

@@ -29,7 +29,7 @@ public class GameSceneTransitionManager : SingletonManager<GameSceneTransitionMa
     private void PreparePlayerState()
     {
         // 플레이어 상태를 게임 시작에 맞게 준비
-        PlayerData playerData = UniTaskSaveDataManager.Instance.PlayerData;
+        PlayerData playerData = PlayerDataManager.Instance.PlayerData;
         if (playerData != null)
         {
             Debug.Log($"Player {playerData.playerName} ready to start at stage {playerData.currentStageIndex}");

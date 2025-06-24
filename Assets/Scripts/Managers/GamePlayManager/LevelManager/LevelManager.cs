@@ -32,10 +32,6 @@ public class LevelManager : SingletonManager<LevelManager>, IInitializableAsync
 
     public bool IsInitialized { get; private set; }
 
-    void Start()
-    {
-        StartCoroutine(InitializeGame());
-    }
 
     /// <summary>
     /// 게임 초기화 코루틴

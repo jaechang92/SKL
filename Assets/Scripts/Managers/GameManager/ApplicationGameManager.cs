@@ -49,7 +49,7 @@ public class ApplicationGameManager : SingletonManager<ApplicationGameManager>, 
 
     private IEnumerator ApplyPlayerData()
     {
-        PlayerData playerData = UniTaskSaveDataManager.Instance.PlayerData;
+        PlayerData playerData = PlayerDataManager.Instance.PlayerData;
         if (playerData != null)
         {
             // 플레이어 레벨, 스킬, 아이템 등 적용
