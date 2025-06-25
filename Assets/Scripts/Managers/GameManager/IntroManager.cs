@@ -8,6 +8,9 @@ using System.Collections.Generic;
 using Metamorph.Initialization;
 using CustomDebug;
 using TMPro;
+using System.Threading.Tasks;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Metamorph.Managers
 {
@@ -24,7 +27,6 @@ namespace Metamorph.Managers
         [SerializeField] private Slider _loadingProgressBar;
         [SerializeField] private TextMeshProUGUI _anyKeyText;
         [SerializeField] private GameObject _loadingPanel;
-        [SerializeField] private GameObject _startPanel;
 
         [Header("Loading Settings")]
         [SerializeField] private float _minimumLoadingTime = 2f;
@@ -99,9 +101,6 @@ namespace Metamorph.Managers
 
                 // 매니저 참조 설정
                 await SetupManagerReferences(cancellationToken);
-
-                // UI 상태 초기화
-                SetupInitialUIState();
 
                 IsInitialized = true;
                 JCDebug.Log("[IntroManager] 인트로 매니저 초기화 완료", JCDebug.LogLevel.Success);
@@ -183,60 +182,34 @@ namespace Metamorph.Managers
             CreateLoadingPanel();
 
             // 시작 패널 생성
-            CreateStartPanel();
+            //CreateStartPanel();
 
             JCDebug.Log("[IntroManager] 인트로 UI 자동 생성 완료");
         }
 
         private void CreateLoadingPanel()
         {
-            _loadingPanel = new GameObject("LoadingPanel");
-            _loadingPanel.transform.SetParent(_introCanvas.transform, false);
+            //_loadingPanel = await GameResourceManager.Instance.LoadAsync<GameObject>("Assets/AddressablesAssets/UI/Common/LoadingPanel");
+            Addressables.LoadAssetAsync<GameObject>("LoadingPanel").Completed += handle =>
+            {
+                if (handle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    //_loadingPanel 생성
+                    _loadingPanel = Instantiate(handle.Result, _introCanvas.transform);
 
-            var rectTransform = _loadingPanel.AddComponent<RectTransform>();
-            rectTransform.anchorMin = Vector2.zero;
-            rectTransform.anchorMax = Vector2.one;
-            rectTransform.offsetMin = Vector2.zero;
-            rectTransform.offsetMax = Vector2.zero;
-
-            // 배경
-            var bg = _loadingPanel.AddComponent<Image>();
-            bg.color = Color.black;
-
-            // 로딩 텍스트
-            CreateText("LoadingText", "Loading...", new Vector2(0, 100), out _loadingText);
-            _loadingText.fontSize = 48;
-
-            // 진행률 텍스트
-            CreateText("ProgressText", "0%", new Vector2(0, 50), out _progressText);
-            _progressText.fontSize = 24;
-
-            // 진행률 바
-            CreateProgressBar();
+                    _loadingText = _loadingPanel.transform.Find("LoadingText").GetComponent<TextMeshProUGUI>();
+                    _progressText = _loadingPanel.transform.Find("ProgressText").GetComponent<TextMeshProUGUI>();
+                    _anyKeyText = _loadingPanel.transform.Find("AnyKeyText").GetComponent<TextMeshProUGUI>();
+                    _loadingPanel.SetActive(true);
+                }
+                else
+                {
+                    JCDebug.Log("[IntroManager] 로딩 패널 로드 실패", JCDebug.LogLevel.Error);
+                }
+            };
         }
 
-        private void CreateStartPanel()
-        {
-            _startPanel = new GameObject("StartPanel");
-            _startPanel.transform.SetParent(_introCanvas.transform, false);
-
-            var rectTransform = _startPanel.AddComponent<RectTransform>();
-            rectTransform.anchorMin = Vector2.zero;
-            rectTransform.anchorMax = Vector2.one;
-            rectTransform.offsetMin = Vector2.zero;
-            rectTransform.offsetMax = Vector2.zero;
-
-            // 배경
-            var bg = _startPanel.AddComponent<Image>();
-            bg.color = new Color(0, 0, 0, 0.8f);
-
-            // Any Key 텍스트
-            CreateText("AnyKeyText", "Press Any Key to Start", new Vector2(0, -100), out _anyKeyText);
-            _anyKeyText.fontSize = 36;
-
-            _startPanel.SetActive(false);
-        }
-
+        
         private void CreateText(string name, string text, Vector2 position, out TextMeshProUGUI textComponent)
         {
             GameObject textObj = new GameObject(name);
@@ -326,14 +299,6 @@ namespace Metamorph.Managers
             }
         }
 
-        private void SetupInitialUIState()
-        {
-            if (_loadingPanel != null) _loadingPanel.SetActive(true);
-            if (_startPanel != null) _startPanel.SetActive(false);
-
-            _isLoadingComplete = false;
-            _canProceed = false;
-        }
 
         private void SetupDefaultLoadingMessages()
         {
@@ -373,7 +338,7 @@ namespace Metamorph.Managers
                 await ExecuteLoadingProcess(_introCTS.Token);
 
                 // 로딩 완료 후 처리
-                await OnLoadingFinished();
+                OnLoadingFinished();
 
                 JCDebug.Log("[IntroManager] 인트로 시퀀스 완료");
             }
@@ -491,36 +456,36 @@ namespace Metamorph.Managers
         /// <summary>
         /// 로딩 완료 후 처리
         /// </summary>
-        private async UniTask OnLoadingFinished()
+        private void OnLoadingFinished()
         {
             OnLoadingComplete?.Invoke();
 
             // 로딩 패널 비활성화, 시작 패널 활성화
-            if (_loadingPanel != null) _loadingPanel.SetActive(false);
-            if (_startPanel != null) _startPanel.SetActive(true);
+            //if (_loadingPanel != null) _loadingPanel.SetActive(false);
 
+            SetOffOther();
             // Any Key 텍스트 깜빡임 시작
-            StartAnyKeyBlink().Forget();
+            StartAnyKeyBlink();
 
             _canProceed = true;
 
             JCDebug.Log("[IntroManager] Any Key 대기 중...");
         }
 
+        private void SetOffOther()
+        {
+            _loadingText.gameObject.SetActive(false);
+            _progressText.gameObject.SetActive(false);
+            //_loadingProgressBar.gameObject.SetActive(false);
+            _anyKeyText.gameObject.SetActive(true);
+        }
+
         /// <summary>
         /// Any Key 텍스트 깜빡임 효과
         /// </summary>
-        private async UniTaskVoid StartAnyKeyBlink()
+        private void StartAnyKeyBlink()
         {
-            while (_canProceed && !_isTransitioning)
-            {
-                if (_anyKeyText != null)
-                {
-                    _anyKeyText.alpha = _anyKeyText.alpha > 0.5f ? 0.3f : 1.0f;
-                }
-
-                await UniTask.Delay(TimeSpan.FromSeconds(_anyKeyBlinkInterval), cancellationToken: _introCTS.Token);
-            }
+            _anyKeyText.GetComponent<CustomTween>().PlayTween();
         }
 
         #endregion
@@ -681,7 +646,6 @@ namespace Metamorph.Managers
                 _isLoadingComplete = false;
                 _canProceed = false;
                 _isTransitioning = false;
-                SetupInitialUIState();
             }
         }
 

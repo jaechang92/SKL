@@ -139,7 +139,8 @@ namespace Metamorph.Managers
         {
             if (_skillDatabase == null)
             {
-                _skillDatabase = Resources.Load<SkillDatabase>("Data/SkillDatabase");
+                //_skillDatabase = Resources.Load<SkillDatabase>("Data/SkillDatabase");
+                _skillDatabase = await GameResourceManager.Instance.LoadAsync<SkillDatabase>("Data/SkillDatabase", cancellationToken);
 
                 if (_skillDatabase == null)
                 {

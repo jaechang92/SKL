@@ -1,187 +1,198 @@
+// Assets/Scripts/Managers/ResourceManager/ResourceSettings.cs
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Metamorph.Managers
 {
     /// <summary>
-    /// 리소스 관리 설정을 담는 ScriptableObject
-    /// 프리로드 리스트, 캐시 설정, 메모리 관리 옵션 등을 정의
+    /// 리소스 매니저 설정을 관리하는 ScriptableObject
+    /// 프리로드할 리소스, 씬별 설정, 최적화 옵션 등을 설정
     /// </summary>
     [CreateAssetMenu(fileName = "ResourceSettings", menuName = "Metamorph/Managers/Resource Settings")]
     public class ResourceSettings : ScriptableObject
     {
-        [Header("== System Settings ==")]
-        [Tooltip("Addressables 시스템 사용 여부")]
-        public bool useAddressables = true;
+        [Header("Essential Resources")]
+        [SerializeField] private List<EssentialResourceEntry> _essentialResources = new List<EssentialResourceEntry>();
 
-        [Tooltip("리소스 캐싱 활성화")]
-        public bool enableCaching = true;
+        [Header("Scene Preload Settings")]
+        [SerializeField] private List<ScenePreloadSettings> _sceneSettings = new List<ScenePreloadSettings>();
 
-        [Tooltip("게임 시작 시 필수 리소스 프리로드")]
-        public bool enablePreloading = true;
+        [Header("Memory Management")]
+        [SerializeField] private MemoryManagementSettings _memorySettings = new MemoryManagementSettings();
 
-        [Header("== Cache Settings ==")]
-        [Tooltip("최대 캐시 항목 수")]
-        [Range(100, 5000)]
-        public int maxCacheSize = 1000;
+        [Header("Addressables Settings")]
+        [SerializeField] private AddressablesSettings _addressablesSettings = new AddressablesSettings();
 
-        [Tooltip("캐시 타임아웃 (초)")]
-        [Range(60, 1800)]
-        public float cacheTimeoutSeconds = 300f; // 5분
+        [Header("Cache Settings")]
+        [SerializeField] private CacheSettings _cacheSettings = new CacheSettings();
 
-        [Tooltip("캐시 정리 주기 (초)")]
-        [Range(10, 300)]
-        public float cacheCleanupInterval = 60f;
+        [Header("Performance Settings")]
+        [SerializeField] private PerformanceSettings _performanceSettings = new PerformanceSettings();
 
-        [Header("== Loading Settings ==")]
-        [Tooltip("비동기 로딩 사용")]
-        public bool loadResourcesAsync = true;
+        #region Public Methods
 
-        [Tooltip("동시 로딩 최대 개수")]
-        [Range(1, 50)]
-        public int maxConcurrentLoads = 10;
-
-        [Tooltip("로딩 타임아웃 (초)")]
-        [Range(5, 120)]
-        public float loadTimeoutSeconds = 30f;
-
-        [Header("== Memory Management ==")]
-        [Tooltip("자동 메모리 관리 활성화")]
-        public bool enableMemoryManagement = true;
-
-        [Tooltip("메모리 사용량 임계치 (MB)")]
-        [Range(128, 2048)]
-        public float memoryThresholdMB = 512f;
-
-        [Tooltip("GC 체크 주기 (초)")]
-        [Range(10, 300)]
-        public float gcCheckIntervalSeconds = 30f;
-
-        [Tooltip("강제 GC 실행 임계치 (MB)")]
-        [Range(256, 4096)]
-        public float forceGCThresholdMB = 1024f;
-
-        [Header("== Preload Lists ==")]
-        [Tooltip("필수 리소스 목록 (Resources 폴더 경로)")]
-        public List<PreloadResourceEntry> essentialResources = new List<PreloadResourceEntry>();
-
-        [Tooltip("Addressables 키 목록")]
-        public List<PreloadAddressableEntry> addressableResources = new List<PreloadAddressableEntry>();
-
-        [Tooltip("씬별 프리로드 설정")]
-        public List<ScenePreloadSettings> scenePreloadSettings = new List<ScenePreloadSettings>();
-
-        [Header("== Advanced Settings ==")]
-        [Tooltip("로딩 진행상황 로그 출력")]
-        public bool logResourceOperations = true;
-
-        [Tooltip("상세 메모리 정보 로그")]
-        public bool logMemoryDetails = false;
-
-        [Tooltip("리소스 로드 실패 시 재시도 횟수")]
-        [Range(0, 5)]
-        public int loadRetryCount = 2;
-
-        [Tooltip("재시도 간격 (초)")]
-        [Range(0.1f, 5f)]
-        public float retryDelaySeconds = 1f;
-
-        [Header("== Performance ==")]
-        [Tooltip("프레임당 최대 로딩 작업 수")]
-        [Range(1, 20)]
-        public int maxLoadsPerFrame = 5;
-
-        [Tooltip("프리로드 시 프레임 분산")]
-        public bool distributePreloadAcrossFrames = true;
-
-        [Tooltip("로우 우선순위 리소스 지연 시간 (초)")]
-        [Range(0f, 2f)]
-        public float lowPriorityDelay = 0.1f;
-
-        #region Validation
-
-        private void OnValidate()
+        /// <summary>
+        /// 필수 리소스 목록을 우선순위별로 정렬하여 반환
+        /// </summary>
+        public List<EssentialResourceEntry> GetSortedEssentialResources()
         {
-            // 설정값 유효성 검사
-            maxCacheSize = Mathf.Max(100, maxCacheSize);
-            cacheTimeoutSeconds = Mathf.Max(60, cacheTimeoutSeconds);
-            loadTimeoutSeconds = Mathf.Max(5, loadTimeoutSeconds);
-            memoryThresholdMB = Mathf.Max(128, memoryThresholdMB);
-
-            // 강제 GC 임계치는 메모리 임계치보다 높아야 함
-            forceGCThresholdMB = Mathf.Max(memoryThresholdMB + 128, forceGCThresholdMB);
-
-            ValidatePreloadEntries();
+            return _essentialResources
+                .Where(entry => !string.IsNullOrEmpty(entry.resourcePath))
+                .OrderBy(entry => (int)entry.priority)
+                .ThenBy(entry => entry.loadOrder)
+                .ToList();
         }
 
-        private void ValidatePreloadEntries()
+        /// <summary>
+        /// 특정 씬의 프리로드 설정 반환
+        /// </summary>
+        public ScenePreloadSettings GetScenePreloadSettings(string sceneName)
         {
-            // 중복 제거 및 유효성 검사
-            for (int i = essentialResources.Count - 1; i >= 0; i--)
-            {
-                if (string.IsNullOrEmpty(essentialResources[i].resourcePath))
-                {
-                    essentialResources.RemoveAt(i);
-                }
-            }
+            return _sceneSettings.FirstOrDefault(settings =>
+                string.Equals(settings.sceneName, sceneName, StringComparison.OrdinalIgnoreCase));
+        }
 
-            for (int i = addressableResources.Count - 1; i >= 0; i--)
+        /// <summary>
+        /// 게임 시작 시 로드할 리소스 목록 반환
+        /// </summary>
+        public List<string> GetGameStartResources()
+        {
+            return _essentialResources
+                .Where(entry => entry.loadOnGameStart)
+                .Select(entry => entry.resourcePath)
+                .ToList();
+        }
+
+        /// <summary>
+        /// 특정 우선순위의 리소스 목록 반환
+        /// </summary>
+        public List<EssentialResourceEntry> GetResourcesByPriority(ResourcePriority priority)
+        {
+            return _essentialResources
+                .Where(entry => entry.priority == priority)
+                .OrderBy(entry => entry.loadOrder)
+                .ToList();
+        }
+
+        /// <summary>
+        /// 씬별 설정 추가 또는 업데이트
+        /// </summary>
+        public void SetScenePreloadSettings(string sceneName, ScenePreloadSettings settings)
+        {
+            var existingSettings = _sceneSettings.FirstOrDefault(s => s.sceneName == sceneName);
+            if (existingSettings != null)
             {
-                if (string.IsNullOrEmpty(addressableResources[i].addressableKey))
-                {
-                    addressableResources.RemoveAt(i);
-                }
+                int index = _sceneSettings.IndexOf(existingSettings);
+                _sceneSettings[index] = settings;
             }
+            else
+            {
+                settings.sceneName = sceneName;
+                _sceneSettings.Add(settings);
+            }
+        }
+
+        /// <summary>
+        /// 메모리 임계치 확인
+        /// </summary>
+        public bool ShouldPerformGarbageCollection(float currentMemoryMB)
+        {
+            return currentMemoryMB > _memorySettings.memoryThresholdMB;
+        }
+
+        /// <summary>
+        /// 캐시 제거 대상 확인
+        /// </summary>
+        public bool ShouldEvictCache(int currentCacheSize)
+        {
+            return currentCacheSize >= _cacheSettings.maxCacheSize;
         }
 
         #endregion
 
-        #region Helper Methods
+        #region Properties
 
+        public MemoryManagementSettings MemorySettings => _memorySettings;
+        public AddressablesSettings AddressablesSettings => _addressablesSettings;
+        public CacheSettings CacheSettings => _cacheSettings;
+        public PerformanceSettings PerformanceSettings => _performanceSettings;
+        public int TotalEssentialResources => _essentialResources.Count;
+        public int TotalSceneSettings => _sceneSettings.Count;
+
+        #endregion
+
+        #region Editor Utilities
+
+#if UNITY_EDITOR
         /// <summary>
-        /// 특정 씬의 프리로드 설정을 가져옵니다
+        /// 에디터에서 리소스 경로 유효성 검사
         /// </summary>
-        public ScenePreloadSettings GetScenePreloadSettings(string sceneName)
+        [ContextMenu("Validate Resource Paths")]
+        public void ValidateResourcePaths()
         {
-            return scenePreloadSettings.Find(s => s.sceneName == sceneName);
+            var invalidResources = new List<string>();
+
+            foreach (var entry in _essentialResources)
+            {
+                if (string.IsNullOrEmpty(entry.resourcePath))
+                    continue;
+
+                // Resources 폴더에서 확인
+                var resource = Resources.Load(entry.resourcePath);
+                if (resource == null)
+                {
+                    invalidResources.Add(entry.resourcePath);
+                }
+            }
+
+            if (invalidResources.Count > 0)
+            {
+                Debug.LogWarning($"[ResourceSettings] 유효하지 않은 리소스 경로들:\n{string.Join("\n", invalidResources)}");
+            }
+            else
+            {
+                Debug.Log("[ResourceSettings] 모든 리소스 경로가 유효합니다.");
+            }
         }
 
         /// <summary>
-        /// 우선순위별로 정렬된 필수 리소스 목록을 반환합니다
+        /// 중복 리소스 경로 확인
         /// </summary>
-        public List<PreloadResourceEntry> GetSortedEssentialResources()
+        [ContextMenu("Check Duplicate Resources")]
+        public void CheckDuplicateResources()
         {
-            var sorted = new List<PreloadResourceEntry>(essentialResources);
-            sorted.Sort((a, b) => a.priority.CompareTo(b.priority));
-            return sorted;
+            var duplicates = _essentialResources
+                .GroupBy(entry => entry.resourcePath)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key)
+                .ToList();
+
+            if (duplicates.Count > 0)
+            {
+                Debug.LogWarning($"[ResourceSettings] 중복된 리소스 경로들:\n{string.Join("\n", duplicates)}");
+            }
+            else
+            {
+                Debug.Log("[ResourceSettings] 중복된 리소스가 없습니다.");
+            }
         }
 
         /// <summary>
-        /// 우선순위별로 정렬된 Addressables 리소스 목록을 반환합니다
+        /// 설정 요약 정보 출력
         /// </summary>
-        public List<PreloadAddressableEntry> GetSortedAddressableResources()
+        [ContextMenu("Print Settings Summary")]
+        public void PrintSettingsSummary()
         {
-            var sorted = new List<PreloadAddressableEntry>(addressableResources);
-            sorted.Sort((a, b) => a.priority.CompareTo(b.priority));
-            return sorted;
+            Debug.Log($"[ResourceSettings] 설정 요약:\n" +
+                     $"  필수 리소스: {_essentialResources.Count}개\n" +
+                     $"  씬 설정: {_sceneSettings.Count}개\n" +
+                     $"  메모리 임계치: {_memorySettings.memoryThresholdMB}MB\n" +
+                     $"  캐시 최대 크기: {_cacheSettings.maxCacheSize}개\n" +
+                     $"  동시 로딩: {_performanceSettings.maxConcurrentLoads}개");
         }
-
-        /// <summary>
-        /// 리소스 유형별 필터링
-        /// </summary>
-        public List<PreloadResourceEntry> GetResourcesByType(PreloadResourceType type)
-        {
-            return essentialResources.FindAll(r => r.resourceType == type);
-        }
-
-        /// <summary>
-        /// 우선순위별 필터링
-        /// </summary>
-        public List<PreloadResourceEntry> GetResourcesByPriority(PreloadPriority priority)
-        {
-            return essentialResources.FindAll(r => r.priority == priority);
-        }
+#endif
 
         #endregion
     }
@@ -189,198 +200,223 @@ namespace Metamorph.Managers
     #region Data Structures
 
     /// <summary>
-    /// 프리로드할 리소스 정보 (Resources 폴더용)
+    /// 필수 리소스 항목 정보
     /// </summary>
-    [System.Serializable]
-    public class PreloadResourceEntry
+    [Serializable]
+    public class EssentialResourceEntry
     {
-        [Tooltip("리소스 경로 (Resources 폴더 기준)")]
+        [Header("Resource Info")]
         public string resourcePath;
-
-        [Tooltip("리소스 유형")]
-        public PreloadResourceType resourceType;
-
-        [Tooltip("로딩 우선순위")]
-        public PreloadPriority priority = PreloadPriority.Normal;
-
-        [Tooltip("설명 (에디터용)")]
         public string description;
+        public ResourceType resourceType;
 
-        [Tooltip("필수 리소스 여부 (로딩 실패 시 게임 진행 불가)")]
-        public bool isRequired = false;
+        [Header("Loading Settings")]
+        public ResourcePriority priority = ResourcePriority.Normal;
+        public int loadOrder = 0;
+        public bool loadOnGameStart = false;
+        public bool keepInMemory = false;
 
-        [Tooltip("게임 시작 시 즉시 로드")]
-        public bool loadOnGameStart = true;
+        [Header("Cache Settings")]
+        public bool allowCaching = true;
+        public float cacheTimeoutSeconds = 300f; // 5분
 
-        public PreloadResourceEntry()
+        [Header("Platform Settings")]
+        public List<RuntimePlatform> platformRestrictions = new List<RuntimePlatform>();
+
+        /// <summary>
+        /// 현재 플랫폼에서 로드 가능한지 확인
+        /// </summary>
+        public bool IsValidForCurrentPlatform()
         {
-            resourcePath = "";
-            resourceType = PreloadResourceType.Other;
-            priority = PreloadPriority.Normal;
-            description = "";
-            isRequired = false;
-            loadOnGameStart = true;
-        }
+            if (platformRestrictions.Count == 0)
+                return true;
 
-        public PreloadResourceEntry(string path, PreloadResourceType type, PreloadPriority prio = PreloadPriority.Normal)
-        {
-            resourcePath = path;
-            resourceType = type;
-            priority = prio;
-            description = "";
-            isRequired = false;
-            loadOnGameStart = true;
-        }
-    }
-
-    /// <summary>
-    /// 프리로드할 Addressables 리소스 정보
-    /// </summary>
-    [System.Serializable]
-    public class PreloadAddressableEntry
-    {
-        [Tooltip("Addressables 키")]
-        public string addressableKey;
-
-        [Tooltip("리소스 유형")]
-        public PreloadResourceType resourceType;
-
-        [Tooltip("로딩 우선순위")]
-        public PreloadPriority priority = PreloadPriority.Normal;
-
-        [Tooltip("설명 (에디터용)")]
-        public string description;
-
-        [Tooltip("필수 리소스 여부")]
-        public bool isRequired = false;
-
-        [Tooltip("게임 시작 시 즉시 로드")]
-        public bool loadOnGameStart = true;
-
-        [Tooltip("라벨 그룹 (Addressables)")]
-        public string labelGroup = "";
-
-        public PreloadAddressableEntry()
-        {
-            addressableKey = "";
-            resourceType = PreloadResourceType.Other;
-            priority = PreloadPriority.Normal;
-            description = "";
-            isRequired = false;
-            loadOnGameStart = true;
-            labelGroup = "";
-        }
-
-        public PreloadAddressableEntry(string key, PreloadResourceType type, PreloadPriority prio = PreloadPriority.Normal)
-        {
-            addressableKey = key;
-            resourceType = type;
-            priority = prio;
-            description = "";
-            isRequired = false;
-            loadOnGameStart = true;
-            labelGroup = "";
+            return platformRestrictions.Contains(Application.platform);
         }
     }
 
     /// <summary>
     /// 씬별 프리로드 설정
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class ScenePreloadSettings
     {
-        [Tooltip("씬 이름")]
+        [Header("Scene Info")]
         public string sceneName;
+        public bool preloadOnSceneLoad = true;
+        public bool unloadOnSceneExit = true;
 
-        [Tooltip("이 씬에서만 사용할 리소스 목록")]
+        [Header("Scene-Specific Resources")]
         public List<string> sceneSpecificResources = new List<string>();
-
-        [Tooltip("이 씬에서만 사용할 Addressables 키")]
         public List<string> sceneSpecificAddressables = new List<string>();
 
-        [Tooltip("씬 로드 시 프리로드 실행")]
-        public bool preloadOnSceneLoad = true;
+        [Header("Preload Settings")]
+        public PreloadStrategy preloadStrategy = PreloadStrategy.Immediate;
+        public float preloadDelay = 0f;
+        public int maxConcurrentPreloads = 5;
 
-        [Tooltip("씬 언로드 시 리소스 해제")]
-        public bool unloadOnSceneUnload = true;
-
-        public ScenePreloadSettings()
-        {
-            sceneName = "";
-            sceneSpecificResources = new List<string>();
-            sceneSpecificAddressables = new List<string>();
-            preloadOnSceneLoad = true;
-            unloadOnSceneUnload = true;
-        }
-
-        public ScenePreloadSettings(string scene)
-        {
-            sceneName = scene;
-            sceneSpecificResources = new List<string>();
-            sceneSpecificAddressables = new List<string>();
-            preloadOnSceneLoad = true;
-            unloadOnSceneUnload = true;
-        }
+        [Header("Memory Management")]
+        public bool allowSceneResourceCaching = true;
+        public float sceneResourceTimeoutSeconds = 600f; // 10분
     }
 
     /// <summary>
-    /// 리소스 유형 분류
+    /// 메모리 관리 설정
     /// </summary>
-    public enum PreloadResourceType
+    [Serializable]
+    public class MemoryManagementSettings
     {
-        [Tooltip("텍스처/스프라이트")]
+        [Header("Memory Thresholds")]
+        [Range(64, 2048)]
+        public float memoryThresholdMB = 512f;
+        [Range(32, 1024)]
+        public float criticalMemoryThresholdMB = 768f;
+
+        [Header("Garbage Collection")]
+        public bool enableAutoGC = true;
+        [Range(10, 300)]
+        public float gcCheckInterval = 30f;
+        public GCCollectionMode gcMode = GCCollectionMode.Optimized;
+
+        [Header("Memory Monitoring")]
+        public bool enableMemoryProfiling = false;
+        public float memoryCheckInterval = 5f;
+        public bool logMemoryWarnings = true;
+    }
+
+    /// <summary>
+    /// Addressables 시스템 설정
+    /// </summary>
+    [Serializable]
+    public class AddressablesSettings
+    {
+        [Header("Initialization")]
+        public bool autoInitialize = true;
+        public bool initializeOnGameStart = true;
+
+        [Header("Download Settings")]
+        public bool enableProgressCallbacks = true;
+        public float downloadTimeoutSeconds = 30f;
+        public int maxRetryAttempts = 3;
+
+        [Header("Catalog Settings")]
+        public bool checkForCatalogUpdates = true;
+        public float catalogCheckInterval = 300f; // 5분
+
+        [Header("Bundle Management")]
+        public bool enableBundleCaching = true;
+        public long maxBundleCacheSize = 1024 * 1024 * 1024; // 1GB
+        public bool clearBundleCacheOnVersionChange = true;
+    }
+
+    /// <summary>
+    /// 캐시 시스템 설정
+    /// </summary>
+    [Serializable]
+    public class CacheSettings
+    {
+        [Header("Cache Size")]
+        [Range(10, 1000)]
+        public int maxCacheSize = 200;
+        [Range(1, 100)]
+        public int cacheEvictionBatchSize = 20;
+
+        [Header("Cache Strategy")]
+        public CacheEvictionStrategy evictionStrategy = CacheEvictionStrategy.LeastRecentlyUsed;
+        public bool respectReferenceCount = true;
+
+        [Header("Cache Persistence")]
+        public bool enablePersistentCache = false;
+        public string persistentCachePath = "ResourceCache";
+        public float persistentCacheValidityHours = 24f;
+
+        [Header("Cache Monitoring")]
+        public bool enableCacheStatistics = true;
+        public bool logCacheOperations = false;
+    }
+
+    /// <summary>
+    /// 성능 관련 설정
+    /// </summary>
+    [Serializable]
+    public class PerformanceSettings
+    {
+        [Header("Loading Performance")]
+        [Range(1, 20)]
+        public int maxConcurrentLoads = 5;
+        [Range(0.01f, 1f)]
+        public float loadingTimeSliceSeconds = 0.1f;
+
+        [Header("Frame Rate Management")]
+        public bool enableFrameRateControl = true;
+        public int targetFrameRate = 60;
+        public bool pauseLoadingOnLowFrameRate = true;
+        public int lowFrameRateThreshold = 30;
+
+        [Header("Background Loading")]
+        public bool enableBackgroundLoading = true;
+        public ThreadPriority backgroundThreadPriority = ThreadPriority.BelowNormal;
+
+        [Header("LOD Management")]
+        public bool enableLODOptimization = true;
+        public float lodSwitchDistance = 100f;
+        public int maxHighDetailObjects = 50;
+    }
+
+    #endregion
+
+    #region Enums
+
+    /// <summary>
+    /// 리소스 타입 분류
+    /// </summary>
+    public enum ResourceType
+    {
         Texture,
-        [Tooltip("오디오 클립")]
         Audio,
-        [Tooltip("프리팹")]
         Prefab,
-        [Tooltip("애니메이션")]
-        Animation,
-        [Tooltip("머티리얼")]
         Material,
-        [Tooltip("폰트")]
-        Font,
-        [Tooltip("UI 에셋")]
-        UI,
-        [Tooltip("스크립터블 오브젝트")]
+        Animation,
         ScriptableObject,
-        [Tooltip("기타")]
+        Scene,
+        Font,
+        Shader,
         Other
     }
 
     /// <summary>
-    /// 프리로드 우선순위
+    /// 리소스 로딩 우선순위
     /// </summary>
-    public enum PreloadPriority
+    public enum ResourcePriority
     {
-        [Tooltip("최고 우선순위 (게임 진행 필수)")]
-        Critical = 0,
-        [Tooltip("높은 우선순위 (주요 시스템)")]
-        High = 1,
-        [Tooltip("일반 우선순위")]
-        Normal = 2,
-        [Tooltip("낮은 우선순위 (백그라운드 로딩)")]
-        Low = 3
+        Critical = 0,   // 게임 시작에 필수
+        High = 1,       // 첫 씬에서 필요
+        Normal = 2,     // 일반적인 리소스
+        Low = 3,        // 지연 로딩 가능
+        Background = 4  // 백그라운드에서 로딩
     }
 
-    public enum ResourceSource
+    /// <summary>
+    /// 프리로드 전략
+    /// </summary>
+    public enum PreloadStrategy
     {
-        Resources,
-        Addressables,
-        StreamingAssets,
-        Network
+        Immediate,      // 즉시 로딩
+        Delayed,        // 지연 로딩
+        Progressive,    // 점진적 로딩
+        OnDemand        // 요청 시 로딩
     }
 
-    [System.Serializable]
-    public class ResourceLoadInfo
+    /// <summary>
+    /// 캐시 제거 전략
+    /// </summary>
+    public enum CacheEvictionStrategy
     {
-        public string path;
-        public Type resourceType;
-        public ResourceSource source;
-        public DateTime loadTime;
-        public DateTime lastAccessTime;
-        public int accessCount;
-        public long fileSizeBytes;
+        LeastRecentlyUsed,  // 가장 오래된 것부터
+        LeastFrequentlyUsed, // 가장 적게 사용된 것부터
+        FirstInFirstOut,    // 먼저 들어온 것부터
+        Random,             // 무작위
+        BySize              // 크기 기준
     }
 
     #endregion

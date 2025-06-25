@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 454eb0645173e9e47abb33d929d56e80, type: 3}
+  m_Name: DefaultForm
+  m_EditorClassIdentifier: 
+  formId: 1
+  formName: "\uAE30\uBCF8\uD3FC"
+  description: "\uAE30\uBCF8\uC73C\uB85C \uC8FC\uC5B4\uC9C0\uB294 \uD3FC"
+  formSprite: {fileID: 0}
+  formIcon: {fileID: 0}
+  animatorController: {fileID: 9100000, guid: 08333dabfc76dcb4e98011f2bd1d2e64, type: 2}
+  rarity: 0
+  type: 0
+  category: 0
+  maxHealth: 0
+  moveSpeed: 10
+  jumpForce: 10
+  basicAttack: {fileID: 11400000, guid: 28aa06806a09f99498a888e5cd6038e8, type: 2}
+  skillOne: {fileID: 11400000, guid: def46eacb5844434e9de6944aed8250b, type: 2}
+  skillTwo: {fileID: 11400000, guid: f3f1321b81b53e9419c71b7f9058e21b, type: 2}
+  ultimateSkill: {fileID: 11400000, guid: 7d6052d5994203f409eda99c44c2765f, type: 2}
+  passiveAbilities: []
+  unlockedByDefault: 0
+  unlockRequirement: 

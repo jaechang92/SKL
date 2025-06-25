@@ -156,7 +156,7 @@ namespace Metamorph.Managers
         {
             if (_formDatabase == null)
             {
-                _formDatabase = Resources.Load<FormDatabase>("Data/FormDatabase");
+                _formDatabase = await GameResourceManager.Instance.LoadAsync<FormDatabase>("Data/FormDatabase", cancellationToken);
 
                 if (_formDatabase == null)
                 {

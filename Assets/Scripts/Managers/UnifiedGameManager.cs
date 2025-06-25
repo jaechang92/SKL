@@ -89,11 +89,11 @@ public class UnifiedGameManager : SingletonManager<UnifiedGameManager>
         CreateAndRegisterManager<PlayerDataManager>(InitializationPriority.Core);
         CreateAndRegisterManager<SaveManager>(InitializationPriority.Gameplay);
         CreateAndRegisterManager<LoadManager>(InitializationPriority.Gameplay);
+        CreateAndRegisterManager<GameResourceManager>(InitializationPriority.Critical);
 
         //CreateAndRegisterManager<GameSceneTransitionManager>(InitializationPriority.Core);
 
         //CreateAndRegisterManager<GameSettingsManager>(InitializationPriority.Gameplay);
-        CreateAndRegisterManager<GameResourceManager>(InitializationPriority.Gameplay);
         CreateAndRegisterManager<SkillManager>(InitializationPriority.Gameplay);
         CreateAndRegisterManager<FormManager>(InitializationPriority.Gameplay);
 

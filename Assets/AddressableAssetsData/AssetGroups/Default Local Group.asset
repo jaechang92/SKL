@@ -15,8 +15,26 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: 0478d4c78af513446947619924f94e9e
   m_SerializeEntries:
+  - m_GUID: 4d42ee3e9130ccb47b87abbed603e517
+    m_Address: Data/SkillDatabase
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5c16b40bd1ab4034eb4688687ab27261
+    m_Address: Data/FormDatabase
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: aeb4a45ed8ccbe74395e1bfc16d4d09a
-    m_Address: Assets/Resources
+    m_Address: Assets/AddressablesAssets
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f340929a38b05d5469f3b295ba5bb8a6
+    m_Address: LoadingPanel
     m_ReadOnly: 0
     m_SerializedLabels:
     - default
